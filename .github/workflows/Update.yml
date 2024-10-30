@@ -52,6 +52,7 @@ jobs:
         rm -rf ./patch/wall-luci/luci-app-homeproxy
         rm -rf ./theme/luci-theme-argon
         rm -rf ./luci-app-oled
+        rm -rf ./op-lucky/*
         
          
         git clone https://github.com/zzsj0928/luci-app-pushbot ./luci-app-pushbot
@@ -148,7 +149,11 @@ jobs:
         git clone https://github.com/unifreq/luci-app-oled ./oled
         mv ./oled/luci-app-oled ./
         rm -rf ./oled
-      
+
+        git clone https://github.com/gdy666/luci-app-lucky ./op-lucky/tmp
+        mv ./op-lucky/tmp/luci-app-lucky ./op-lucky/
+        mv ./op-lucky/tmp/lucky ./op-lucky/
+        rm -rf ./op-lucky/tmp      
 
         
     - name: Apply
