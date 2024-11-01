@@ -3,15 +3,15 @@
 #
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
+# 近视眼专用版本，来自sbwml <admin@cooluc.com>。
+#
 
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=Argon Theme
 LUCI_DEPENDS:=+curl +jsonfilter
 PKG_VERSION:=2.3.1
-PKG_RELEASE:=20230420
-
-CONFIG_LUCI_CSSTIDY:=
+PKG_RELEASE:=2
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
