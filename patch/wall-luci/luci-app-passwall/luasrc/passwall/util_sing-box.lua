@@ -763,7 +763,7 @@ function gen_config(var)
 	local remote_dns_doh_url = var["-remote_dns_doh_url"]
 	local remote_dns_doh_host = var["-remote_dns_doh_host"]
 	local remote_dns_client_ip = var["-remote_dns_client_ip"]
-	local remote_dns_query_strategy = var["-dns_client_ip"]
+	local remote_dns_query_strategy = var["-remote_dns_query_strategy"]
 	local remote_dns_fake = var["-remote_dns_fake"]
 	local dns_cache = var["-dns_cache"]
 	local dns_socks_address = var["-dns_socks_address"]
