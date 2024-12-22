@@ -52,7 +52,7 @@ jobs:
         rm -rf ./patch/wall-luci/luci-app-homeproxy
         rm -rf ./theme/luci-theme-argon
         rm -rf ./luci-app-oled
-        rm -rf ./op-lucky/*
+        rm -rf ./op-daed/*
         
          
         git clone https://github.com/zzsj0928/luci-app-pushbot ./luci-app-pushbot
@@ -155,6 +155,10 @@ jobs:
         mv ./op-lucky/tmp/lucky ./op-lucky/
         rm -rf ./op-lucky/tmp      
 
+        git clone https://github.com/QiuSimons/luci-app-daed ./op-daed/tmp
+        mv ./op-daed/tmp/luci-app-daed ./op-daed/
+        mv ./op-daed/tmp/daed ./op-daed/
+        rm -rf ./op-daed/tmp
         
     - name: Apply
       run: |
