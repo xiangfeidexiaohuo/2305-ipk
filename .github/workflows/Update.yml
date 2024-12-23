@@ -52,6 +52,7 @@ jobs:
         rm -rf ./patch/wall-luci/luci-app-homeproxy
         rm -rf ./theme/luci-theme-argon
         rm -rf ./luci-app-oled
+        rm -rf ./op-lucky/*
         rm -rf ./op-daed/*
         
          
@@ -159,6 +160,8 @@ jobs:
         mv ./op-daed/tmp/luci-app-daed ./op-daed/
         mv ./op-daed/tmp/daed ./op-daed/
         rm -rf ./op-daed/tmp
+        mkdir -p ./op-daed/libcron && wget -O ./op-daed/libcron/Makefile https://raw.githubusercontent.com/immortalwrt/packages/refs/heads/master/libs/libcron/Makefile
+        
         
     - name: Apply
       run: |
