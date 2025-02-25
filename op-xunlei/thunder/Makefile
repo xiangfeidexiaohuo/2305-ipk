@@ -2,13 +2,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=thunder
 
-PKG_VERSION:=3.11.2-32
+PKG_VERSION:=1.0.3
 
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=gngpp <gngppz@gmail.com>
 
 PKG_SOURCE:=thunder-$(PKG_VERSION)-$(ARCH)-unknown-linux-musl.tar.gz
-PKG_SOURCE_URL:=https://github.com/gngpp/thunder/releases/download/v$(PKG_VERSION)/
+PKG_SOURCE_URL:=https://github.com/0x676e67/thunder/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=skip
 STRIP:=false
 
