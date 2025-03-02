@@ -126,7 +126,7 @@ jobs:
         mv ./OpenClash/luci-app-openclash ./patch/wall-luci/
         rm -rf ./OpenClash
 
-        git clone https://github.com/nikkinikki-org/OpenWrt-nikki ./patch/wall-luci/tmp
+        git clone https://github.com/nikkinikki-org/OpenWrt-nikki.git -b dev ./patch/wall-luci/tmp
         mv ./patch/wall-luci/tmp/luci-app-nikki ./patch/wall-luci/
         mv ./patch/wall-luci/tmp/nikki ./patch/wall-luci/
         rm -rf ./patch/wall-luci/tmp
