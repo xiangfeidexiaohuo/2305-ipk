@@ -5,10 +5,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
-PKG_VERSION:=2025.05.08
+PKG_VERSION:=2025.05.12
 DAED_VERSION:=daed-58d0382
 WING_VERSION:=wing-33cbf33
-CORE_VERSION:=core-dce65b4
+CORE_VERSION:=core-3cb4eee
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -74,14 +74,15 @@ define Build/Prepare
 		rm -rf $(PKG_BUILD_DIR)/dae-core && git clone https://github.com/daeuniverse/dae $(PKG_BUILD_DIR)/dae-core && git -C $(PKG_BUILD_DIR)/dae-core checkout ${CORE_VERSION: -7} ; \
 		pushd $(PKG_BUILD_DIR)/dae-core ; \
 		git submodule update --init --recursive ; \
+		wget -qO - https://github.com/daeuniverse/dae/commit/ecaa214.patch | patch -Rp1 ; \
+		wget -qO - https://github.com/daeuniverse/dae/commit/dce65b4.patch | patch -Rp1 ; \
+		wget -qO - https://github.com/daeuniverse/dae/commit/c14d06a.patch | patch -p1 ; \
 		wget -qO - https://github.com/daeuniverse/dae/pull/763.patch | patch -p1 ; \
 		wget -qO - https://github.com/daeuniverse/dae/pull/782.patch | patch -p1 ; \
-		go get -u ; \
 		go mod tidy ; \
 		popd ; \
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing ; \
 		wget -qO - https://github.com/daeuniverse/dae-wing/commit/ca02961.patch | patch -p1 ; \
-		go get -u ; \
 		go mod tidy ; \
 		popd ; \
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) ; \
