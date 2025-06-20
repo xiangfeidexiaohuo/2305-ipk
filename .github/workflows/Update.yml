@@ -55,6 +55,7 @@ jobs:
         rm -rf ./op-lucky/*
         rm -rf ./op-daed/*
         rm -rf ./op-mosdns/*
+        rm -rf ./op-openlist/*
         
          
         git clone https://github.com/zzsj0928/luci-app-pushbot ./luci-app-pushbot
@@ -153,6 +154,12 @@ jobs:
         rm -rf ./theme/luci-theme-argon/README*
         rm -rf ./theme/luci-theme-argon/RELEASE*
 
+
+        git clone https://github.com/sbwml/luci-app-openlist ./op-openlist/tmp
+        mv ./op-openlist/tmp/luci-app-openlist ./op-openlist/
+        mv ./op-openlist/tmp/openlist ./op-openlist/
+        rm -rf ./op-openlist/tmp 
+        
         
         git clone https://github.com/unifreq/luci-app-oled ./oled
         mv ./oled/luci-app-oled ./
