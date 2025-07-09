@@ -56,7 +56,6 @@ jobs:
         rm -rf ./op-daed/*
         rm -rf ./op-mosdns/*
         rm -rf ./op-openlist/*
-        rm -rf ./luci-app-webdav
         rm -rf ./op-quickfile
         
          
@@ -102,10 +101,6 @@ jobs:
 
 
         ### 新插件
-        git clone https://github.com/sbwml/luci-app-webdav
-        rm -rf ./luci-app-webdav/.git
-        cp -af ./luci-app-webdav/po/zh_Hans ./luci-app-webdav/po/zh-cn
-
         git clone https://github.com/sbwml/luci-app-quickfile ./op-quickfile
         rm -rf ./op-quickfile/.git
         cp -af ./op-quickfile/luci-app-quickfile/po/zh_Hans ./op-quickfile/luci-app-quickfile/po/zh-cn
