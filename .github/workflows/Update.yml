@@ -55,8 +55,8 @@ jobs:
         rm -rf ./op-lucky/*
         rm -rf ./op-daed/*
         rm -rf ./op-mosdns/*
-        rm -rf ./op-quickfile
         rm -rf ./op-smartdns/*
+        rm -rf ./op-openlist2/*
         
          
         git clone https://github.com/zzsj0928/luci-app-pushbot ./luci-app-pushbot
@@ -100,10 +100,14 @@ jobs:
         rm -rf ./op-oaf/README.md
 
 
-        ### 新插件
-        git clone https://github.com/sbwml/luci-app-quickfile ./op-quickfile
-        rm -rf ./op-quickfile/.git
-        cp -af ./op-quickfile/luci-app-quickfile/po/zh_Hans ./op-quickfile/luci-app-quickfile/po/zh-cn
+        ### openlist2
+        git clone https://github.com/sbwml/luci-app-openlist2 ./op-openlist2
+        rm -rf ./op-openlist2/.git
+        rm -rf ./op-openlist2/.github
+        rm -rf ./op-openlist2/install.sh
+        sed -i "s/msgstr\ \"OpenList\"/msgstr\ \"OpenList2\"/g" ./op-openlist2/luci-app-openlist2/po/zh_Hans/openlist2.po
+        cp -af ./op-openlist2/luci-app-openlist2/po/zh_Hans ./op-openlist2/luci-app-openlist2/po/zh-cn
+
 
         ### smartdns
         git clone https://github.com/pymumu/luci-app-smartdns ./op-smartdns/luci-app-smartdns
