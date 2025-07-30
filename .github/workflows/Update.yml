@@ -56,7 +56,7 @@ jobs:
         rm -rf ./op-daed/*
         rm -rf ./op-mosdns/*
         rm -rf ./op-quickfile
-        rm -rf ./op-mosdns/*
+        rm -rf ./op-smartdns/*
         
          
         git clone https://github.com/zzsj0928/luci-app-pushbot ./luci-app-pushbot
@@ -106,12 +106,12 @@ jobs:
         cp -af ./op-quickfile/luci-app-quickfile/po/zh_Hans ./op-quickfile/luci-app-quickfile/po/zh-cn
 
         ### smartdns
-        git clone https://github.com/pymumu/luci-app-smartdns ./op-mosdns/luci-app-smartdns
-        rm -rf ./op-mosdns/luci-app-smartdns/.git
-        cp -af ./op-mosdns/luci-app-smartdns/po/zh_Hans ./op-mosdns/luci-app-smartdns/po/zh-cn
+        git clone https://github.com/pymumu/luci-app-smartdns ./op-smartdns/luci-app-smartdns
+        rm -rf ./op-smartdns/luci-app-smartdns/.git
+        cp -af ./op-smartdns/luci-app-smartdns/po/zh_Hans ./op-smartdns/luci-app-smartdns/po/zh-cn
 
-        git clone https://github.com/pymumu/openwrt-smartdns ./op-mosdns/smartdns
-        rm -rf ./op-mosdns/smartdns/.git
+        git clone https://github.com/pymumu/openwrt-smartdns ./op-smartdns/smartdns
+        rm -rf ./op-smartdns/smartdns/.git
 
    
         git clone https://github.com/xiaorouji/openwrt-passwall-packages ./patch/wall
