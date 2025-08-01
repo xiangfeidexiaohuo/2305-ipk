@@ -1,6 +1,6 @@
 /*************************************************************************
  *
- * Copyright (C) 2018-2024 Ruilin Peng (Nick) <pymumu@gmail.com>.
+ * Copyright (C) 2018-2025 Ruilin Peng (Nick) <pymumu@gmail.com>.
  *
  * smartdns is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -254,7 +254,7 @@ return view.extend({
 		o.rempty = true;
 		o.depends('tls_server', '1');
 		o.depends('doh_server', '1');
-	
+
 		o = s.taboption("advanced", form.Value, "bind_cert_key", _("Server Cert Key"), _("Server certificate key file path."));
 		o.datatype = "string";
 		o.placeholder = "/var/etc/smartdns/smartdns/smartdns-key.pem"
@@ -371,7 +371,7 @@ return view.extend({
 
 			return true;
 		}
-		
+
 		// NFTset name;
 		o = s.taboption("advanced", form.Value, "nftset_name", _("NFTset Name"), _("NFTset name, format: [#[4|6]:[family#table#set]]"));
 		o.rmempty = true;
@@ -470,7 +470,7 @@ return view.extend({
 
 			o.value(download_files[i].name);
 		}
-	
+
 		///////////////////////////////////////
 		// second dns server;
 		///////////////////////////////////////
@@ -543,7 +543,7 @@ return view.extend({
 		o = s.taboption("seconddns", form.Flag, "seconddns_force_aaaa_soa", _("Force AAAA SOA"), _("Force AAAA SOA."));
 		o.rmempty = true;
 		o.default = o.disabled;
-		
+
 		// Force HTTPS SOA
 		o = s.taboption("seconddns", form.Flag, "seconddns_force_https_soa", _("Force HTTPS SOA"), _("Force HTTPS SOA."));
 		o.rmempty = true;
@@ -745,7 +745,7 @@ return view.extend({
 
 		o = s.taboption("custom", form.ListValue, "log_level", _("Log Level"));
 		o.rmempty = true;
-		o.placeholder = "default";
+		o.default = "";
 		o.value("", _("default"));
 		o.value("debug");
 		o.value("info");
@@ -757,10 +757,10 @@ return view.extend({
 
 		o = s.taboption("custom", form.ListValue, "log_output_mode", _("Log Output Mode"));
 		o.rmempty = true;
-		o.placeholder = _("file");
+		o.default = "file";
 		o.value("file", _("file"));
 		o.value("syslog", _("syslog"));
-	
+
 		o = s.taboption("custom", form.Value, "log_size", _("Log Size"));
 		o.rmempty = true;
 		o.placeholder = "default";
@@ -776,6 +776,21 @@ return view.extend({
 		o.placeholder = "/var/log/smartdns/smartdns.log"
 		o.depends("log_output_mode", "file");
 
+		o = s.taboption("custom", form.DummyValue, "view_log", _("View Log"));
+		o.renderWidget = function () {
+			return E('button', {
+				'class': 'btn cbi-button',
+				'id': 'btn_view_log',
+				'click': ui.createHandlerFn(this, function () {
+					window.location.href = "/cgi-bin/luci/admin/services/smartdns/log";
+				})
+			}, [_("View Log")]);
+		}
+		var log_levels = ["debug", "info", "notice", "warn", "error", "fatal"];
+		log_levels.forEach(function(level) {
+			o.depends({ log_output_mode: "file", log_level: level });
+		});
+
 		o = s.taboption("custom", form.Flag, "enable_audit_log", _("Enable Audit Log"));
 		o.rmempty = true;
 		o.default = o.disabled;
@@ -783,7 +798,7 @@ return view.extend({
 
 		o = s.taboption("custom", form.ListValue, "audit_log_output_mode", _("Audit Log Output Mode"));
 		o.rmempty = true;
-		o.placeholder = _("file");
+		o.default = "file";
 		o.value("file", _("file"));
 		o.value("syslog", _("syslog"));
 		o.depends("enable_audit_log", "1");
@@ -987,7 +1002,7 @@ return view.extend({
 		o.rmempty = false;
 		o.default = o.disabled;
 
-		o = s.taboption("basic", form.DynamicList, "client_addr", _("Client Address"), 
+		o = s.taboption("basic", form.DynamicList, "client_addr", _("Client Address"),
 		_("If a client address is specified, only that client will apply this rule. You can enter an IP address, such as 1.2.3.4, or a MAC address, such as aa:bb:cc:dd:ee:ff."));
 		o.rempty = true
 		o.rmempty = true;
@@ -1008,7 +1023,7 @@ return view.extend({
 			if (value.match(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/)) {
 				return true;
 			}
-			
+
 			return _("Client address format error, please input ip adress or mac address.");
 		}
 
@@ -1019,7 +1034,7 @@ return view.extend({
 		o.rempty = true
 		o.modalonly = true;
 		o.root_directory = "/etc/smartdns/ip-set"
-		
+
 		o = s.taboption("basic", form.Value, "server_group", _("Server Group"), _("DNS Server group belongs to, such as office, home."))
 		o.rmempty = true
 		o.placeholder = "default"
@@ -1119,7 +1134,7 @@ return view.extend({
 
 			return true;
 		}
-		
+
 		// NFTset name;
 		o = s.taboption("advanced", form.Value, "nftset_name", _("NFTset Name"), _("NFTset name, format: [#[4|6]:[family#table#set]]"));
 		o.rmempty = true;
