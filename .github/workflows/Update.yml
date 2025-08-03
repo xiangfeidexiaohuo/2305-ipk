@@ -105,7 +105,6 @@ jobs:
         rm -rf ./op-openlist2/.git
         rm -rf ./op-openlist2/.github
         rm -rf ./op-openlist2/install.sh
-        sed -i "s/msgstr\ \"OpenList\"/msgstr\ \"OpenList2\"/g" ./op-openlist2/luci-app-openlist2/po/zh_Hans/openlist2.po
         cp -af ./op-openlist2/luci-app-openlist2/po/zh_Hans ./op-openlist2/luci-app-openlist2/po/zh-cn
 
 
