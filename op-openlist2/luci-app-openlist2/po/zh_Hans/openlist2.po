@@ -9,7 +9,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "OpenList"
-msgstr "OpenList2"
+msgstr "OpenList"
 
 msgid "Open Web Interface"
 msgstr "打开 Web 界面"
