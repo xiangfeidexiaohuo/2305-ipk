@@ -5,14 +5,18 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=20220823-1
-PKG_RELEASE:=
+PKG_NAME:=luci-app-socat
+PKG_VERSION:=20250610
+PKG_RELEASE:=1
+
+PKG_MAINTAINER:=Lienol <lawlienol@gmail.com>
+
 LUCI_TITLE:=LuCI support for Socat
 LUCI_DEPENDS:=+socat
 LUCI_PKGARCH:=all
 
-define Package/luci-app-socat/conffiles
-/etc/config/socat_luci
+define Package/$(PKG_NAME)/conffiles
+/etc/config/socat
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk

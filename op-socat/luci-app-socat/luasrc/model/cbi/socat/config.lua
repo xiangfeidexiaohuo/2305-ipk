@@ -1,6 +1,6 @@
 local d = require "luci.dispatcher"
 
-m = Map("socat_luci", translate("Socat Config"))
+m = Map("socat", translate("Socat Config"))
 m.redirect = d.build_url("admin", "network", "socat")
 
 s = m:section(NamedSection, arg[1], "config", "")
@@ -74,6 +74,25 @@ dest_ipv6:depends("dest_proto", "udp6")
 o = s:option(Value, "dest_port", translate("Destination port"))
 o.datatype = "portrange"
 o.rmempty = false
+
+o = s:option(ListValue, "proxy", translate("Proxy"))
+o:value("", translate("None"))
+o:value("socks4/4a", "Socks4/4a")
+o:value("http", "HTTP")
+o:depends({ proto = "tcp", dest_proto = "tcp4" })
+
+o = s:option(Value, "proxy_server", translate("Proxy Server"))
+o.placeholder = "127.0.0.1"
+o.default = o.placeholder
+o:depends("proxy", "socks4/4a")
+o:depends("proxy", "http")
+
+o = s:option(Value, "proxy_port", translate("Proxy Port"))
+o.datatype = "port"
+o.placeholder = "1080"
+o.default = o.placeholder
+o:depends("proxy", "socks4/4a")
+o:depends("proxy", "http")
 
 o = s:option(Flag, "firewall_accept", translate("Open firewall port"))
 o.default = "1"
