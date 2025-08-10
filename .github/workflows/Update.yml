@@ -94,6 +94,13 @@ jobs:
         mv ./linkease/istore-ui/app-store-ui ./linkease/luci/
         rm -rf ./linkease/istore-ui  
 
+        git clone https://github.com/jjm2473/openwrt-apps ./linkease/openwrt-apps
+        mv ./linkease/openwrt-apps/luci-app-mergerfs ./linkease/luci/
+        sed -i 's/\.\.\/luci\-alias\.mk/\$\(TOPDIR\)\/feeds\/luci\/luci.mk/g' ./linkease/luci/luci-app-mergerfs/Makefile
+        cp -af ./linkease/luci/luci-app-mergerfs/po/zh_Hans ./linkease/luci/luci-app-mergerfs/po/zh-cn
+        mv ./linkease/openwrt-apps/mergerfs ./linkease/nas-packages/
+        mv ./linkease/openwrt-apps/nvtop ./linkease/nas-packages/
+        rm -rf ./linkease/openwrt-apps
 
 
         git clone https://github.com/destan19/OpenAppFilter ./op-oaf
