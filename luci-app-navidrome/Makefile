@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-navidrome
-PKG_VERSION:=1.7
-PKG_RELEASE:=2025
+PKG_VERSION:=1.8
+PKG_RELEASE:=
 PKG_MAINTAINER:=tty228 <tty228@yeah.net>
 PKG_CONFIG_DEPENDS:= \
         CONFIG_PACKAGE_$(PKG_NAME)_Enable_Transcoding
