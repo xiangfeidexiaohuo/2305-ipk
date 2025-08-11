@@ -30,7 +30,7 @@ ifeq ($(filter aarch64 x86_64, $(ARCH)),)
 endif
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/golang/golang-package.mk
+include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
 define Package/openlist
   SECTION:=net
