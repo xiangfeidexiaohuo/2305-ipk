@@ -51,7 +51,7 @@ jobs:
         rm -rf ./patch/wall-luci/nikki
         rm -rf ./patch/wall-luci/luci-app-homeproxy
         rm -rf ./theme/luci-theme-argon
-        rm -rf ./luci-app-oled
+        # rm -rf ./luci-app-oled
         rm -rf ./op-lucky/*
         rm -rf ./op-daed/*
         rm -rf ./op-mosdns/*
@@ -179,9 +179,9 @@ jobs:
         rm -rf ./theme/luci-theme-argon/README*
         rm -rf ./theme/luci-theme-argon/RELEASE*
       
-        git clone https://github.com/unifreq/luci-app-oled ./oled
-        mv ./oled/luci-app-oled ./
-        rm -rf ./oled
+        # git clone https://github.com/unifreq/luci-app-oled ./oled
+        # mv ./oled/luci-app-oled ./
+        # rm -rf ./oled
 
         git clone https://github.com/gdy666/luci-app-lucky ./op-lucky/tmp
         mv ./op-lucky/tmp/luci-app-lucky ./op-lucky/
