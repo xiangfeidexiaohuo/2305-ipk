@@ -16,8 +16,12 @@ EOF
 . /lib/functions/system.sh
 
 case "$(board_name)" in
-"hinlink,opc-h69k"|"hlink,opc-h69k"|"hlink,h69k")
-	uci_write_config '/dev/i2c-5' 1 1 eth0
+hinlink,opc-h69k)
+	uci_write_config '/dev/i2c-5' 1 1 wwan0
+	;;
+easepi,r2-qc|\
+easepi,r2)
+	uci_write_config '/dev/i2c-3' 0 1 eth0
 	;;
 esac
 
@@ -28,6 +32,5 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
-sed -e "/\/etc\/init\.d\/oled/d" -i /etc/crontabs/root && /etc/init.d/cron reload
 rm -rf /tmp/luci-*
 exit 0

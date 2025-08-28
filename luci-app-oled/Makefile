@@ -7,10 +7,8 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_Title:=LuCI support for ssd1306 0.91\' 138x32 display
-LUCI_DEPENDS:=+libconfig
-LUCI_PKGARCH:=$(if $(realpath src/Makefile),,all)
-PKG_VERSION:=20230927
+LUCI_TITLE:=LuCI support for ssd1306 0.91\' 138x32 display
+PKG_VERSION:=20230703
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPLv3
