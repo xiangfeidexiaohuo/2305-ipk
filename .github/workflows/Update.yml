@@ -49,6 +49,8 @@ jobs:
         rm -rf ./patch/wall-luci/luci-app-openclash
         rm -rf ./patch/wall-luci/luci-app-nikki
         rm -rf ./patch/wall-luci/nikki
+        rm -rf ./patch/wall-luci/luci-app-momo
+        rm -rf ./patch/wall-luci/momo
         rm -rf ./patch/wall-luci/luci-app-homeproxy
         rm -rf ./theme/luci-theme-argon
         # rm -rf ./luci-app-oled
@@ -166,6 +168,13 @@ jobs:
         mv ./patch/wall-luci/tmp/luci-app-nikki ./patch/wall-luci/
         mv ./patch/wall-luci/tmp/nikki ./patch/wall-luci/
         rm -rf ./patch/wall-luci/tmp
+
+
+        git clone https://github.com/nikkinikki-org/OpenWrt-momo ./patch/wall-luci/tmp
+        mv ./patch/wall-luci/tmp/luci-app-momo ./patch/wall-luci/
+        mv ./patch/wall-luci/tmp/momo ./patch/wall-luci/
+        rm -rf ./patch/wall-luci/tmp
+
         
         git clone https://github.com/immortalwrt/homeproxy ./patch/wall-luci/luci-app-homeproxy
         rm -rf ./patch/wall-luci/luci-app-homeproxy/.github
