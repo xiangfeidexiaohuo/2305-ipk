@@ -60,11 +60,16 @@ jobs:
         # rm -rf ./op-smartdns/*
         rm -rf ./op-openlist2/*
         rm -rf ./op-qbittorrent-static/*
+        rm -rf ./op-easytier/*
 
 
         git clone https://github.com/teleostnacl/luci-app-qbittorrent-static ./op-qbittorrent-static
         rm -rf ./op-qbittorrent-static/.github && rm -rf ./op-qbittorrent-static/.git && rm -rf ./op-qbittorrent-static/README.md
-         
+
+        git clone https://github.com/EasyTier/luci-app-easytier ./op-easytier
+        rm -rf ./op-easytier/README.md
+        rm -rf ./op-easytier/.github
+    
         git clone https://github.com/zzsj0928/luci-app-pushbot ./luci-app-pushbot
         rm -rf ./luci-app-pushbo/README.md
         git clone https://github.com/tty228/luci-app-wechatpush ./luci-app-wechatpush
