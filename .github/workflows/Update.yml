@@ -69,6 +69,7 @@ jobs:
         git clone https://github.com/EasyTier/luci-app-easytier ./op-easytier
         rm -rf ./op-easytier/README.md
         rm -rf ./op-easytier/.github
+        rm -rf ./op-easytier/.git
     
         git clone https://github.com/zzsj0928/luci-app-pushbot ./luci-app-pushbot
         rm -rf ./luci-app-pushbo/README.md
