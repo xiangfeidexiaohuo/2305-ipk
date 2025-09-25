@@ -59,12 +59,14 @@ jobs:
         rm -rf ./op-mosdns/*
         # rm -rf ./op-smartdns/*
         rm -rf ./op-openlist2/*
-        rm -rf ./op-qbittorrent-static/*
+        rm -rf ./op-qB/*
         rm -rf ./op-easytier/*
 
 
-        git clone https://github.com/teleostnacl/luci-app-qbittorrent-static ./op-qbittorrent-static
-        rm -rf ./op-qbittorrent-static/.github && rm -rf ./op-qbittorrent-static/.git && rm -rf ./op-qbittorrent-static/README.md
+        git clone https://github.com/linkease/istore-packages ./op-qB/tmp
+        cp -af ./op-qB/tmp/luci-app-qbittorrent ./op-qB/
+        cp -af ./op-qB/tmp/qBittorrent-static ./op-qB/
+        rm -rf ./op-qB/tmp
 
         git clone https://github.com/EasyTier/luci-app-easytier ./op-easytier
         rm -rf ./op-easytier/README.md
