@@ -117,7 +117,7 @@ jobs:
         rm -rf ./linkease/openwrt-apps
 
 
-        git clone https://github.com/destan19/OpenAppFilter ./op-oaf
+        git clone https://github.com/jjm2473/OpenAppFilter ./op-oaf
         rm -rf ./op-oaf/README.md
 
 
