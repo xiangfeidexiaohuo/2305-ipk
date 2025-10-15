@@ -174,7 +174,6 @@
             ]
         };
 		let app_filter_data = [];
-        const selectedAppIds = [1001, 1002, 1003];
 
 		function init_data2() {
 			// new XHR().get('<%=url('admin/network/class_list')%>', null,
@@ -201,6 +200,8 @@
 						if (Array.isArray(data.app_list)) {
 							app_filter_data = data.app_list;
 						}
+						else
+							app_filter_data = [];
 						resolve(); 
 					}
 				);
@@ -519,7 +520,7 @@
                     else{
                         runStatusElement.textContent = '<%:Not Running%>';
                         runStatusElement.style.color = 'red'; 
-                        runDescElement.textContent = `(<%:oaf driver not loaded, please download the oaf.ko driver file corresponding to the kernel version of this firmware for installation, and enable auto-loading. Current kernel version is%> ${data.data.kernel_version})`;
+                        runDescElement.textContent = `(<%:oaf driver not loaded, please enable auto-loading on the advanced settings page.%>)`;
                     }
                 }
             );
@@ -589,7 +590,7 @@
             </div>
         </div>
         <div class="button-container">
-            <button type="button" class="submit-button" onclick="submitHandle()"><%:Save%></button>
+            <button type="button" class="cbi-button cbi-button-save" onclick="submitHandle()"><%:Save%></button>
         </div>
     </div>
 </div>

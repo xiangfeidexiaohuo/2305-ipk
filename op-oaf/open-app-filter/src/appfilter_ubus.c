@@ -859,7 +859,7 @@ static int handle_get_app_filter_adv(struct ubus_context *ctx, struct ubus_objec
     char lan_ifname[16];
 
     int tcp_rst = af_uci_get_int_value(uci_ctx, "appfilter.global.tcp_rst");
-    af_uci_get_value(uci_ctx, "appfilter.global.lan_ifname", lan_ifname, sizeof(lan_ifname));
+    af_uci_get_value(uci_ctx, "appfilter.global.lan_ifname", lan_ifname, 16);
     int disable_hnat = af_uci_get_int_value(uci_ctx, "appfilter.global.disable_hnat");
     int auto_load_engine = af_uci_get_int_value(uci_ctx, "appfilter.global.auto_load_engine");
 
@@ -911,6 +911,8 @@ static int handle_set_app_filter_adv(struct ubus_context *ctx, struct ubus_objec
         af_uci_set_int_value(uci_ctx, "appfilter.global.auto_load_engine", json_object_get_int(auto_load_engine_obj));
         if (json_object_get_int(auto_load_engine_obj) == 0){
             system("rm /etc/modules.d/oaf");
+        } else {
+            system("modprobe oaf");
         }
     }
 
@@ -918,7 +920,7 @@ static int handle_set_app_filter_adv(struct ubus_context *ctx, struct ubus_objec
     af_uci_commit(uci_ctx, "appfilter");
     g_oaf_config_change = 1;
     reload_oaf_rule();
-    system("/usr/bin/hnat.sh &");
+    system("/usr/libexec/oaf/hnat.sh &");
     uci_free_context(uci_ctx);
     struct blob_buf b = {};
     blob_buf_init(&b, 0);

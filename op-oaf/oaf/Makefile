@@ -3,6 +3,9 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=oaf
+PKG_VERSION:=6.1.6
+PKG_RELEASE:=1
+
 include $(INCLUDE_DIR)/package.mk
 
 PKG_AUTOLOAD:=oaf
@@ -13,7 +16,7 @@ define KernelPackage/oaf
   CATEGORY:=TT Apps
   TITLE:=OAF kernel DPI driver
   FILES:=$(PKG_BUILD_DIR)/oaf.ko 
-  DEPENDS:=+kmod-ipt-conntrack
+  DEPENDS:=+kmod-ipt-conntrack +kmod-nf-reject6
   KCONFIG:=
   # AUTOLOAD:=$(call AutoLoad,0,$(PKG_AUTOLOAD))
 endef
