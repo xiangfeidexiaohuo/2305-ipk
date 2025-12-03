@@ -6,8 +6,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
 PKG_VERSION:=2025.11.03
-DAED_VERSION:=daed-618b837
-WING_VERSION:=wing-5a3f7eb
+DAED_VERSION:=daed-dc70a1d
+WING_VERSION:=wing-6bb6a31
 CORE_VERSION:=core-7e67e31
 WING_HASH_SHORT:=$(shell echo $(WING_VERSION) | cut -d- -f2)
 CORE_HASH_SHORT:=$(shell echo $(CORE_VERSION) | cut -d- -f2)
@@ -15,7 +15,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=618b8376a7957892ee6e841cf2fcc82e5bf5a3ea
+PKG_SOURCE_VERSION:=dc70a1d11b0c7fa7b2ea0d447bcd9e61b5c7be00
 PKG_SOURCE_URL:=https://github.com/daeuniverse/daed.git
 PKG_MIRROR_HASH:=skip
 
@@ -27,16 +27,6 @@ PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing
 PKG_BUILD_DEPENDS:=golang/host bpf-headers
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
-
-ifeq ($(ARCH),x86_64)
-  BPF_KARCH:=x86
-else ifeq ($(ARCH),i386)
-  BPF_KARCH:=x86
-else ifeq ($(ARCH),aarch64)
-  BPF_KARCH:=arm64
-else
-  BPF_KARCH:=$(ARCH)
-endif
 
 GO_PKG:=github.com/daeuniverse/dae-wing
 GO_PKG_LDFLAGS:= \
@@ -80,7 +70,11 @@ define Package/daed/conffiles
 /etc/config/daed
 endef
 
-NODE_MAJOR:=v22
+NODE_VERSION:=v22.12.0
+NODE_DIST:=node-$(NODE_VERSION)-linux-x64
+NODE_URL:=https://nodejs.org/dist/$(NODE_VERSION)/$(NODE_DIST).tar.xz
+# NODE_DIST:=node-$(NODE_VERSION)-linux-x64-musl
+# NODE_URL:=https://unofficial-builds.nodejs.org/download/release/$(NODE_VERSION)/$(NODE_DIST).tar.xz
 
 define Build/Prepare
 	( \
@@ -95,24 +89,15 @@ define Build/Prepare
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing ; \
 		go mod tidy ; \
 		popd ; \
-		\
-		echo "--- Auto-detecting and installing Node.js $(NODE_MAJOR) (Latest) ---" ; \
-		mkdir -p $(PKG_BUILD_DIR)/.node ; \
-		NODE_URL=https://nodejs.org/dist/latest-$(NODE_MAJOR).x/ ; \
-		NODE_FILE=$$(wget -qO- $$NODE_URL | grep -o 'node-$(NODE_MAJOR)[^"]*-linux-x64.tar.xz' | head -n1) ; \
-		if [ -z "$$NODE_FILE" ]; then echo "Failed to find Node version"; exit 1; fi ; \
-		echo "Downloading $$NODE_FILE ..." ; \
-		wget -qO- "$${NODE_URL}$${NODE_FILE}" | tar -xJ -C $(PKG_BUILD_DIR)/.node --strip-components=1 ; \
-		export PATH="$(PKG_BUILD_DIR)/.node/bin:$$PATH" ; \
-		\
-		node -v && npm install -g pnpm ; \
-		\
+		mkdir -p $(PKG_BUILD_DIR)/.node_tmp ; \
+		wget -qO - "$(NODE_URL)" | tar -xJ -C $(PKG_BUILD_DIR)/.node_tmp --strip-components=1 ; \
+		export PATH="$(PKG_BUILD_DIR)/.node_tmp/bin:$$$$PATH" ; \
+		npm install -g pnpm ; \
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) ; \
 		pnpm config set engine-strict false ; \
 		pnpm install --shamefully-hoist --no-frozen-lockfile ; \
 		pnpm build ; \
 		popd ; \
-		\
 		mkdir -p $(PKG_BUILD_DIR)/webrender/web ; \
 		cp -rf $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/dist/* $(PKG_BUILD_DIR)/webrender/web ; \
 		find $(PKG_BUILD_DIR)/webrender/web -type f -size +4k ! -name "*.gz" ! -name "*.woff"  ! -name "*.woff2" -exec sh -c '\
@@ -123,7 +108,7 @@ define Build/Prepare
 				rm {}; \
 			fi' \
 		";" ; \
-		rm -rf $(PKG_BUILD_DIR)/.node ; \
+		rm -rf $(PKG_BUILD_DIR)/.node_tmp ; \
 	)
 endef
 
@@ -146,6 +131,7 @@ define Build/Compile
 		BPF_STRIP_FLAG="-strip=$(LLVM_STRIP)" \
 		BPF_CFLAGS="$(DAE_CFLAGS)" \
 		BPF_TARGET="bpfel,bpfeb" \
+		ARCH="$(GO_ARCH)" \
 		go generate control/control.go ; \
 		popd ; \
 		$(call GoPackage/Build/Compile) ; \
