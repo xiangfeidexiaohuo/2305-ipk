@@ -24,9 +24,19 @@ PKG_LICENSE_FILES:=LICENSE wing/LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing
-PKG_BUILD_DEPENDS:=golang/host bpf-headers node/host
+PKG_BUILD_DEPENDS:=golang/host bpf-headers
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
+
+ifeq ($(ARCH),x86_64)
+  BPF_KARCH:=x86
+else ifeq ($(ARCH),i386)
+  BPF_KARCH:=x86
+else ifeq ($(ARCH),aarch64)
+  BPF_KARCH:=arm64
+else
+  BPF_KARCH:=$(ARCH)
+endif
 
 GO_PKG:=github.com/daeuniverse/dae-wing
 GO_PKG_LDFLAGS:= \
@@ -45,8 +55,6 @@ GO_PKG_TARGET_VARS+= \
 	GOEXPERIMENT=greenteagc
 GO_PKG_DEFAULT_LDFLAGS:=-w -s -linkmode external -extldflags '-static'
 
-TAR_CMD=$(HOST_TAR) -C $(BUILD_DIR)/ $(TAR_OPTIONS)
-
 define Package/daed/Default
   SECTION:=net
   CATEGORY:=Network
@@ -57,7 +65,6 @@ endef
 define Package/daed
   $(call Package/daed/Default)
   TITLE:=A Modern Dashboard For dae
-  # You need enable KERNEL_DEBUG_INFO_BTF and KERNEL_BPF_EVENTS
   DEPENDS:=$(GO_ARCH_DEPENDS) $(BPF_DEPENDS) \
     +ca-bundle +kmod-sched-core +kmod-sched-bpf +kmod-xdp-sockets-diag \
     +kmod-veth +v2ray-geoip +v2ray-geosite
@@ -73,6 +80,8 @@ define Package/daed/conffiles
 /etc/config/daed
 endef
 
+NODE_MAJOR:=v22
+
 define Build/Prepare
 	( \
 		$(TAR) --strip-components=1 -C $(PKG_BUILD_DIR)/../ -xzf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.gz ; \
@@ -81,17 +90,29 @@ define Build/Prepare
 		pushd $(PKG_BUILD_DIR)/dae-core ; \
 		git submodule update --init ; \
 		go get -u=patch ; \
-		go get github.com/cilium/ebpf@latest ; \
 		go mod tidy ; \
 		popd ; \
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing ; \
 		go mod tidy ; \
 		popd ; \
+		\
+		echo "--- Auto-detecting and installing Node.js $(NODE_MAJOR) (Latest) ---" ; \
+		mkdir -p $(PKG_BUILD_DIR)/.node ; \
+		NODE_URL=https://nodejs.org/dist/latest-$(NODE_MAJOR).x/ ; \
+		NODE_FILE=$$(wget -qO- $$NODE_URL | grep -o 'node-$(NODE_MAJOR)[^"]*-linux-x64.tar.xz' | head -n1) ; \
+		if [ -z "$$NODE_FILE" ]; then echo "Failed to find Node version"; exit 1; fi ; \
+		echo "Downloading $$NODE_FILE ..." ; \
+		wget -qO- "$${NODE_URL}$${NODE_FILE}" | tar -xJ -C $(PKG_BUILD_DIR)/.node --strip-components=1 ; \
+		export PATH="$(PKG_BUILD_DIR)/.node/bin:$$PATH" ; \
+		\
+		node -v && npm install -g pnpm ; \
+		\
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) ; \
-		npm install -g pnpm ; \
-		pnpm install ; \
+		pnpm config set engine-strict false ; \
+		pnpm install --shamefully-hoist --no-frozen-lockfile ; \
 		pnpm build ; \
 		popd ; \
+		\
 		mkdir -p $(PKG_BUILD_DIR)/webrender/web ; \
 		cp -rf $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/dist/* $(PKG_BUILD_DIR)/webrender/web ; \
 		find $(PKG_BUILD_DIR)/webrender/web -type f -size +4k ! -name "*.gz" ! -name "*.woff"  ! -name "*.woff2" -exec sh -c '\
@@ -102,6 +123,7 @@ define Build/Prepare
 				rm {}; \
 			fi' \
 		";" ; \
+		rm -rf $(PKG_BUILD_DIR)/.node ; \
 	)
 endef
 
