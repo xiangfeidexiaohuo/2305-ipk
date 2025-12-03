@@ -92,8 +92,12 @@ define Build/Prepare
 		mkdir -p $(PKG_BUILD_DIR)/.node_tmp ; \
 		wget -qO - "$(NODE_URL)" | tar -xJ -C $(PKG_BUILD_DIR)/.node_tmp --strip-components=1 ; \
 		export PATH="$(PKG_BUILD_DIR)/.node_tmp/bin:$$$$PATH" ; \
+		export HOME="$(PKG_BUILD_DIR)/.node_tmp" ; \
 		npm install -g pnpm ; \
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) ; \
+		rm -f pnpm-workspace.yaml ; \
+		sed -i 's/workspace:\*/latest/g' package.json ; \
+		rm -f pnpm-lock.yaml ; \
 		pnpm config set engine-strict false ; \
 		pnpm install --shamefully-hoist --no-frozen-lockfile ; \
 		pnpm build ; \
