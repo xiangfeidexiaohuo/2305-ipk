@@ -87,12 +87,11 @@ define Build/Prepare
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing ; \
 		go mod tidy ; \
 		popd ; \
-		( \
-		    cd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) && \
-		    npm install -g pnpm && \
-		    pnpm install && \
-		    pnpm build \
-		) ; \
+		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) ; \
+		npm install -g pnpm ; \
+		pnpm install ; \
+		pnpm build ; \
+		popd ; \
 		mkdir -p $(PKG_BUILD_DIR)/webrender/web ; \
 		cp -rf $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/dist/* $(PKG_BUILD_DIR)/webrender/web ; \
 		find $(PKG_BUILD_DIR)/webrender/web -type f -size +4k ! -name "*.gz" ! -name "*.woff"  ! -name "*.woff2" -exec sh -c '\
