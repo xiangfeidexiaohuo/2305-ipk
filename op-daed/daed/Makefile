@@ -88,9 +88,10 @@ define Build/Prepare
 		go mod tidy ; \
 		popd ; \
 		( \
-			cd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) && \
-			/usr/bin/pnpm install && \
-			/usr/bin/pnpm build \
+		    cd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) && \
+		    npm install -g pnpm && \
+		    pnpm install && \
+		    pnpm build \
 		) ; \
 		mkdir -p $(PKG_BUILD_DIR)/webrender/web ; \
 		cp -rf $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/dist/* $(PKG_BUILD_DIR)/webrender/web ; \
