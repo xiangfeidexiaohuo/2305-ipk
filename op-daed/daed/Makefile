@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
 PKG_VERSION:=2025.11.03
-DAED_VERSION:=daed-7b563b4
+DAED_VERSION:=daed-1c795d9
 WING_VERSION:=wing-6bb6a31
 CORE_VERSION:=core-7e67e31
 WING_HASH_SHORT:=$(shell echo $(WING_VERSION) | cut -d- -f2)
@@ -15,7 +15,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=7b563b4d46edb8fd5021eaf2ae201c8b5348535a
+PKG_SOURCE_VERSION:=1c795d9856088affbc8ce47c7aca9919765da380
 PKG_SOURCE_URL:=https://github.com/daeuniverse/daed.git
 PKG_MIRROR_HASH:=skip
 
@@ -92,12 +92,8 @@ define Build/Prepare
 		mkdir -p $(PKG_BUILD_DIR)/.node_tmp ; \
 		wget -qO - "$(NODE_URL)" | tar -xJ -C $(PKG_BUILD_DIR)/.node_tmp --strip-components=1 ; \
 		export PATH="$(PKG_BUILD_DIR)/.node_tmp/bin:$$$$PATH" ; \
-		export HOME="$(PKG_BUILD_DIR)/.node_tmp" ; \
 		npm install -g pnpm ; \
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) ; \
-		rm -f pnpm-workspace.yaml ; \
-		sed -i 's/workspace:\*/latest/g' package.json ; \
-		rm -f pnpm-lock.yaml ; \
 		pnpm config set engine-strict false ; \
 		pnpm install --shamefully-hoist --no-frozen-lockfile ; \
 		pnpm build ; \
