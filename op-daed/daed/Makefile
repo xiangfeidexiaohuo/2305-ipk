@@ -90,20 +90,12 @@ define Build/Prepare
 		go mod tidy ; \
 		popd ; \
 		mkdir -p $(PKG_BUILD_DIR)/.node_tmp ; \
-		mkdir -p $(PKG_BUILD_DIR)/.home ; \
 		wget -qO - "$(NODE_URL)" | tar -xJ -C $(PKG_BUILD_DIR)/.node_tmp --strip-components=1 ; \
 		export PATH="$(PKG_BUILD_DIR)/.node_tmp/bin:$$$$PATH" ; \
-		export HOME="$(PKG_BUILD_DIR)/.home" ; \
-		export XDG_CONFIG_HOME="$(PKG_BUILD_DIR)/.home/.config" ; \
-		export XDG_CACHE_HOME="$(PKG_BUILD_DIR)/.home/.cache" ; \
 		npm install -g pnpm ; \
 		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) ; \
-		pnpm config set engine-strict false ; \
-		pnpm config set store-dir $(PKG_BUILD_DIR)/.home/.pnpm-store ; \
-		pnpm install --shamefully-hoist --no-frozen-lockfile ; \
-		export NODE_OPTIONS="--max-old-space-size=2560" ; \
-		export TURBO_CONCURRENCY=1 ; \
-		TURBO_TELEMETRY_DISABLED=1 pnpm build ; \
+		pnpm install ; \
+		pnpm build --filter daed ; \
 		popd ; \
 		mkdir -p $(PKG_BUILD_DIR)/webrender/web ; \
 		cp -rf $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/apps/web/dist/* $(PKG_BUILD_DIR)/webrender/web ; \
@@ -116,7 +108,6 @@ define Build/Prepare
 			fi' \
 		";" ; \
 		rm -rf $(PKG_BUILD_DIR)/.node_tmp ; \
-		rm -rf $(PKG_BUILD_DIR)/.home ; \
 	)
 endef
 
