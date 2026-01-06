@@ -195,8 +195,10 @@ yml_dns_get()
    config_get_bool "skip_cert_verify" "$section" "skip_cert_verify" "0"
    config_get_bool "ecs_override" "$section" "ecs_override" "0"
    config_get "ecs_subnet" "$section" "ecs_subnet" ""
-   config_get "disable_ipv4" "$section" "disable_ipv4" "0"
-   config_get "disable_ipv6" "$section" "disable_ipv6" "0"
+   config_get_bool "disable_ipv4" "$section" "disable_ipv4" "0"
+   config_get_bool "disable_ipv6" "$section" "disable_ipv6" "0"
+   config_get "disable_qtype" "$section" "disable_qtype" ""
+
 
    if [[ "$ip" =~ "$regex" ]] || [ -n "$(echo "${ip}" | grep -Eo "${regex}")" ]; then
       ip="[${ip}]"
@@ -235,6 +237,7 @@ yml_dns_get()
    [ "$ecs_override" = "1" ] && [ -n "$ecs_subnet_param" ] && ecs_override_param="ecs-override=true" || ecs_override_param=""
    [ "$disable_ipv4" = "1" ] && disable_ipv4_param="disable-ipv4=true" || disable_ipv4_param=""
    [ "$disable_ipv6" = "1" ] && disable_ipv6_param="disable-ipv6=true" || disable_ipv6_param=""
+   [ -n "$disable_qtype" ] && disable_qtype_param="disable-qtype-$disable_qtype=true" || disable_qtype_param=""
 
    params=""
    append_param() {
@@ -252,6 +255,7 @@ yml_dns_get()
    append_param "$ecs_override_param"
    append_param "$disable_ipv4_param"
    append_param "$disable_ipv6_param"
+   append_param "$disable_qtype_param"
 
    full_dns_address="$dns_type$dns_address$params"
 
