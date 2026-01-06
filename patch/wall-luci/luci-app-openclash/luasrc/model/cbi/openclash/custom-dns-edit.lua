@@ -115,7 +115,7 @@ o.rmempty = false
 o.default = o.disbled
 
 ---- disable-qtype
-o = s:option(Value, "disable_qtype", translate("Disable-Qtype"),translate("Drop The Type of DNS Responsed"))
+o = s:option(DynamicList, "disable_qtype", translate("Disable-Qtype"),translate("Drop The Type of DNS Responsed"))
 o.rmempty = true
 o.datatype = "uinteger"
 o.default = o.disbled
