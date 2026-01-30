@@ -16,14 +16,14 @@ if type_name == "Xray" then
 	o:value("linear")
 end
 
-o = s:option(Flag, "preproxy_enabled", translate("Preproxy"))
+o = s:option(Flag, "preproxy_enabled", translate("Preproxy") .. " " .. translate("Main switch"))
 
 main_node = s:option(ListValue, "main_node", string.format('<a style="color:red">%s</a>', translate("Preproxy Node")), translate("Set the node to be used as a pre-proxy. Each rule (including <code>Default</code>) has a separate switch that controls whether this rule uses the pre-proxy or not."))
 main_node:depends("preproxy_enabled", true)
 main_node.template = appname .. "/cbi/nodes_listvalue"
 main_node.group = {}
 
-o = s:option(Flag, "fakedns", '<a style="color:#FF8C00">FakeDNS</a>', translate("Use FakeDNS work in the domain that proxy.") .. "<br>" ..
+o = s:option(Flag, "fakedns", '<a style="color:#FF8C00">FakeDNS</a>' .. " " .. translate("Main switch"), translate("Use FakeDNS work in the domain that proxy.") .. "<br>" ..
 	translate("Suitable scenarios for let the node servers get the target domain names.") .. "<br>" ..
 	translate("Such as: DNS unlocking of streaming media, reducing DNS query latency, etc."))
 
