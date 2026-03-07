@@ -220,7 +220,7 @@ fi
    fi
 
 ## 路由表检查
-   if [ -n "$(ip -6 rule show |grep 2022)" ]; then
+   if [ -n "$(ip tuntap list |grep utun)" ] && [ -z "$(ip route list table 354)" ]; then
       LOG_OUT "Watchdog: Setting Firewall For IP Rules Table Recreate..."
       /etc/init.d/openclash reload "firewall"
    fi
