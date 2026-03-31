@@ -8,7 +8,7 @@ PKG_NAME:=daed
 PKG_VERSION:=2026.03.31
 DAED_VERSION:=daed-745dce1
 WING_VERSION:=wing-6bb6a31
-CORE_VERSION:=core-6bf9d46
+CORE_VERSION:=core-be073e5
 WING_HASH_SHORT:=$(shell echo $(WING_VERSION) | cut -d- -f2)
 CORE_HASH_SHORT:=$(shell echo $(CORE_VERSION) | cut -d- -f2)
 PKG_RELEASE:=1
@@ -56,7 +56,7 @@ define Package/daed
   $(call Package/daed/Default)
   TITLE:=A Modern Dashboard For dae
   DEPENDS:=$(GO_ARCH_DEPENDS) \
-    +ca-bundle +kmod-sched-core +kmod-sched-bpf +kmod-xdp-sockets-diag \
+    +ca-bundle +kmod-sched-core +kmod-sched-bpf \
     +kmod-veth +v2ray-geoip +v2ray-geosite \
     +@KERNEL_XDP_SOCKETS \
     +DAED_USE_VMLINUX_BTF:vmlinux-btf
