@@ -173,12 +173,6 @@ do
    stream_auto_select_openai=$(uci_get_config "stream_auto_select_openai" || echo 0)
    upnp_lease_file=$(uci -q get upnpd.config.upnp_lease_file)
 
-#wait for core start complete
-while ( [ -n "$(unify_ps_pids "/etc/init.d/openclash")" ] )
-do
-   sleep 1
-done >/dev/null 2>&1
-
 #check the clash service status
 if ! ubus call service list '{"name":"openclash"}' 2>/dev/null | jsonfilter -e '@.openclash.instances.*.running' | grep -q 'true'; then
    uci -q set openclash.config.enable=0
