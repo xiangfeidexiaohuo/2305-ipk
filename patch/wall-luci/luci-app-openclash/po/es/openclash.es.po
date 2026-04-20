@@ -1796,8 +1796,8 @@ msgstr "Paso 3: modo de inicio rápido; omitiendo modificación del archivo."
 msgid "Step 4: Start Running The Clash Core..."
 msgstr "Paso 4: Iniciar el núcleo de Clash..."
 
-msgid "Step 5: Add Cron Rules..."
-msgstr "Paso 5: Añadir tareas programadas..."
+msgid "Step 5: Add Cron Rules, Start Daemons..."
+msgstr "Paso 5: Añadir tareas programadas e iniciar servicios..."
 
 msgid "Step 6: Core Status Checking and Firewall Rules Setting..."
 msgstr "Paso 6: Comprobar estado del núcleo y configurar reglas del firewall..."
@@ -2660,8 +2660,17 @@ msgstr "Google no China"
 msgid "In Fake-ip Mode, Even If This Option is Turned Off, Domain Type Connections Still Pass Through The Core For The Availability"
 msgstr "En modo Fake-IP, incluso desactivado, algunas conexiones de dominio seguirán pasando por el núcleo."
 
+msgid "TUN Interface Start Failed, Please Check The Dependence or Try to Restart Again!"
+msgstr "Fallo al iniciar la interfaz TUN; revisa dependencias o intenta reiniciar."
+
+msgid "TUN Interface Start Failed, Try to Restart Again..."
+msgstr "Inicio de TUN fallido; intentando reiniciar..."
+
 msgid "Core Start Failed, Please Check The Log Infos!"
 msgstr "Fallo al iniciar el núcleo. Revisa el registro de núcleo."
+
+msgid "Core Initial Configuration Timeout, Please Check The Log Infos!"
+msgstr "Tiempo de espera agotado en la configuración inicial del núcleo, ¡consulta la información del registro!"
 
 msgid "Forced Sniff Pure IP Connections"
 msgstr "Forzar sniffing de conexiones IP puras"

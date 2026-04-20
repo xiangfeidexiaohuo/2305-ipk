@@ -1795,7 +1795,7 @@ msgid "Step 4: Start Running The Clash Core..."
 msgstr "第四步: 启动主程序..."
 
 msgid "Step 5: Add Cron Rules, Start Daemons..."
-msgstr "第五步: 添加计划任务..."
+msgstr "第五步: 添加计划任务,启动进程守护程序..."
 
 msgid "Step 6: Core Status Checking and Firewall Rules Setting..."
 msgstr "第六步: 内核状态检查及防火墙规则设置..."
@@ -2658,8 +2658,17 @@ msgstr "Google 非送中"
 msgid "In Fake-ip Mode, Even If This Option is Turned Off, Domain Type Connections Still Pass Through The Core For The Availability"
 msgstr "在 Fake-IP 模式时，即使关闭此选项，域名类型的连接可能仍将通过核心以保证可用性"
 
+msgid "TUN Interface Start Failed, Please Check The Dependence or Try to Restart Again!"
+msgstr "TUN 接口启动失败，请检查依赖情况或稍后重试！"
+
+msgid "TUN Interface Start Failed, Try to Restart Again..."
+msgstr "TUN 接口启动失败，尝试重启内核..."
+
 msgid "Core Start Failed, Please Check The Log Infos!"
 msgstr "内核启动失败，请查看《内核日志》排查失败原因！"
+
+msgid "Core Initial Configuration Timeout, Please Check The Log Infos!"
+msgstr "内核加载配置超时，请查看《内核日志》排查原因！"
 
 msgid "Forced Sniff Pure IP Connections"
 msgstr "强制探测（嗅探）所有纯 IP 的连接"
