@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@main
 
     - name: Set git
       run : |
@@ -148,6 +148,7 @@ jobs:
         mv ./patch/wall/helloworld/redsocks2 ./patch/wall/
         mv ./patch/wall/helloworld/v2ray-core ./patch/wall/
         mv ./patch/wall/helloworld/v2raya ./patch/wall/
+        mv ./patch/wall/helloworld/mihomo ./patch/wall/
         rm -rf ./patch/wall/helloworld
 
         git clone https://github.com/Openwrt-Passwall/openwrt-passwall ./patch/wall-luci/pass
