@@ -106,7 +106,15 @@ jobs:
 
         git clone https://github.com/linkease/istore-ui ./linkease/istore-ui
         mv ./linkease/istore-ui/app-store-ui ./linkease/luci/
-        rm -rf ./linkease/istore-ui  
+        rm -rf ./linkease/istore-ui
+
+        rm -rf ./linkease/nas-packages/ddnsto
+        rm -rf ./linkease/luci/luci-app-ddnsto
+        git clone https://github.com/linkease/ddnsto-openwrt-package ./linkease/tmp
+        mv ./linkease/tmp/ddnsto ./linkease/nas-packages/
+        mv ./linkease/tmp/luci-app-ddnsto ./linkease/luci/
+        rm -rf ./linkease/tmp
+
 
         git clone https://github.com/jjm2473/openwrt-apps ./linkease/openwrt-apps
         mv ./linkease/openwrt-apps/luci-app-mergerfs ./linkease/luci/
