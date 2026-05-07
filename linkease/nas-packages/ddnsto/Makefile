@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2016 OpenWrt.org
+# Copyright (C) 2015-2024 OpenWrt.org
 # Copyright (C) 2020 jjm2473@gmail.com
 #
 # This is free software, licensed under the GNU General Public License v3.
@@ -10,23 +10,45 @@ include $(TOPDIR)/rules.mk
 PKG_ARCH_DDNSTO:=$(ARCH)
 
 PKG_NAME:=ddnsto
-# use PKG_SOURCE_DATE instead of PKG_VERSION for compitable
-PKG_SOURCE_DATE:=3.0.4
-PKG_RELEASE:=8
+# use PKG_SOURCE_DATE instead of PKG_VERSION for compatible
+PKG_SOURCE_DATE:=3.1.7
+PKG_RELEASE:=6
+
+# 构建类型：standard 或 lite
+DDNSTO_TYPE?=standard
+
+# 调试信息
+$(info DDNSTO_TYPE is set to: $(DDNSTO_TYPE))
+
+# 架构名称映射
+ARCH_NAME:=
 ARCH_HEXCODE:=
 ifeq ($(ARCH),x86_64)
+ARCH_NAME=x86_64
 ARCH_HEXCODE=8664
 else ifeq ($(ARCH),aarch64)
+ARCH_NAME=aarch64
 ARCH_HEXCODE=aa64
 else ifeq ($(ARCH),arm)
+ARCH_NAME=arm
 ARCH_HEXCODE=aa32
 else ifeq ($(ARCH),mipsel)
+ARCH_NAME=mipsel
 ARCH_HEXCODE=1b0c
 endif
 PKG_SOURCE_VERSION:=$(ARCH_HEXCODE)
-PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_SOURCE_DATE).tar.gz
-PKG_SOURCE_URL:=https://dl.istoreos.com/binary/ddnsto/
-PKG_HASH:=486aa15a5e026b5a3aca72f1850746e127a7e86ef11db8a7c498dad29545eaf6
+
+
+# 根据类型选择下载地址和文件名
+ifeq ($(DDNSTO_TYPE),lite)
+  PKG_SOURCE:=$(PKG_NAME)-binary-lite-$(PKG_SOURCE_DATE).tar.gz
+  PKG_SOURCE_URL:=https://github.com/linkease/ddnsto-openwrt-package/raw/refs/heads/main/
+  PKG_HASH:=eb437a79b79d4a60838d6171b1934f35956fc49819e3ced55675c7d859fc80d1
+else
+  PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_SOURCE_DATE).tar.gz
+  PKG_SOURCE_URL:=https://github.com/linkease/ddnsto-openwrt-package/raw/refs/heads/main/
+  PKG_HASH:=93dbb92ffde552ed2006bfb6d2479549c8d02323eab3b3d1c45307fea999daaa
+endif
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_SOURCE_DATE)
 
@@ -39,14 +61,21 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
-	TITLE:=DDNS.to - the reverse proxy
+	TITLE:=DDNS.to - the reverse proxy ($(DDNSTO_TYPE))
 	DEPENDS:=
 	PKGARCH:=all
 	URL:=https://www.ddnsto.com/
 endef
 
 define Package/$(PKG_NAME)/description
-  DDNS.to is a reverse proxy
+  DDNS.to is a reverse proxy service that allows you to access
+  your devices from anywhere without public IP or port forwarding.
+  
+  Build type: $(DDNSTO_TYPE)
+  Features:
+  - Multi-device index support
+  - WebDAV file sharing
+  - Intranet penetration
 endef
 
 define Package/$(PKG_NAME)/conffiles
