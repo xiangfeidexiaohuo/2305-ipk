@@ -8,6 +8,7 @@ local json = require "luci.jsonc"
 local HTTP = require "luci.http"
 local DISP = require "luci.dispatcher"
 local sid = arg[1]
+local age_section
 
 font_red = [[<b style=color:red>]]
 font_off = [[</b>]]
@@ -76,6 +77,7 @@ function o.cfgvalue(self, section)
 	m.uci:foreach(openclash, "config_age_secret", function(s)
 		if s.name == name then
 			v = s.algo or ""
+			age_section = s['.name']
 			return false
 		end
 	end)
@@ -83,7 +85,6 @@ function o.cfgvalue(self, section)
 end
 function o.write(self, section, value)
 	local name = m.uci:get(openclash, section, "name") or section
-	local age_section = nil
 	m.uci:foreach(openclash, "config_age_secret", function(s)
 		if s.name == name then
 			age_section = s['.name']
@@ -118,6 +119,7 @@ function o.cfgvalue(self, section)
 	m.uci:foreach(openclash, "config_age_secret", function(s)
 		if s.name == name then
 			v = s.public or ""
+			age_section = s['.name']
 			return false
 		end
 	end)
@@ -125,7 +127,6 @@ function o.cfgvalue(self, section)
 end
 function o.write(self, section, value)
 	local name = m.uci:get(openclash, section, "name") or section
-	local age_section = nil
 	m.uci:foreach(openclash, "config_age_secret", function(s)
 		if s.name == name then
 			age_section = s['.name']
@@ -157,6 +158,7 @@ function o.cfgvalue(self, section)
 	m.uci:foreach(openclash, "config_age_secret", function(s)
 		if s.name == name then
 			v = s.secret or ""
+			age_section = s['.name']
 			return false
 		end
 	end)
@@ -164,7 +166,6 @@ function o.cfgvalue(self, section)
 end
 function o.write(self, section, value)
 	local name = m.uci:get(openclash, section, "name") or section
-	local age_section = nil
 	m.uci:foreach(openclash, "config_age_secret", function(s)
 		if s.name == name then
 			age_section = s['.name']
@@ -324,6 +325,7 @@ o.inputtitle = translate("Back Settings")
 o.inputstyle = "reset"
 o.write = function()
 	m.uci:revert(openclash, sid)
+	m.uci:revert(openclash, age_section)
 	HTTP.redirect(m.redirect)
 end
 
