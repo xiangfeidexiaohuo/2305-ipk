@@ -61,7 +61,11 @@ jobs:
         rm -rf ./op-easytier/*
         rm -rf ./patch/wall-luci/luci-app-passwall
         rm -rf ./patch/wall-luci/luci-app-passwall2
+        rm -rf ./op-tailscale/luci-app-tailscale-community
 
+        git clone https://github.com/tokisaki-galaxy/luci-app-tailscale-community ./op-tailscale/tmp
+        mv ./op-tailscale/tmp/luci-app-tailscale-community ./op-tailscale/
+        rm -rf ./op-tailscale/tmp
 
         git clone https://github.com/linkease/istore-packages ./op-qB/tmp
         cp -af ./op-qB/tmp/luci-app-qbittorrent ./op-qB/
