@@ -227,7 +227,7 @@ jobs:
         git clone https://github.com/sbwml/luci-app-mosdns -b v5 ./op-mosdns/tmp
         mv ./op-mosdns/tmp/luci-app-mosdns ./op-mosdns/
         mv ./op-mosdns/tmp/mosdns ./op-mosdns/
-        mv ./op-mosdns/tmp/v2dat ./op-mosdns/
+        mv ./op-mosdns/tmp/geo2txt ./op-mosdns/
         rm -rf ./op-mosdns/tmp     
         git clone https://github.com/sbwml/v2ray-geodata ./op-mosdns/v2ray-geodata
         
