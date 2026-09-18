@@ -21,11 +21,16 @@ if s1.val["type"] and s1.val["type"] ~= type_name then
 	return
 end
 
-local s = NamedSection(m, arg[1], "server")
+local s = NamedSection(m, arg[1], "tmp_" .. s1.sectiontype)
+s.parent = s1
 s.type_name = type_name
 s.option_prefix = "singbox_"
+api.set_type_cbi(s)
 
 local singbox_tags = luci.sys.exec(singbox_bin .. " version  | grep 'Tags:' | awk '{print $2}'")
+
+local local_version = api.get_app_version("sing-box"):match("[^v]+")
+local version_ge_1_14_0 = api.compare_versions(local_version, ">=", "1.14.0")
 
 local ss_method_list = {
 	"none", "aes-128-gcm", "aes-192-gcm", "aes-256-gcm", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305",
@@ -45,17 +50,18 @@ o.validate = function(self, value)
 	if v then return v end
 	return nil, translate("Custom Config") .. " " .. translate("Must be JSON text!")
 end
-o.custom_cfgvalue = function(self, section, value)
+o.cfgvalue = function(self, section, value)
 	local config_str = m:get(section, "config_str")
 	if config_str then
 		return api.base64Decode(config_str)
 	end
 end
-o.custom_write = function(self, section, value)
+o.write = function(self, section, value)
 	m:set(section, "config_str", api.base64Encode(value) or "")
 end
 
 o = s:option(ListValue, "protocol", translate("Protocol"))
+o:value("direct", "Direct")
 o:value("mixed", "Mixed")
 o:value("socks", "Socks")
 o:value("http", "HTTP")
@@ -63,28 +69,11 @@ o:value("shadowsocks", "Shadowsocks")
 o:value("vmess", "Vmess")
 o:value("vless", "VLESS")
 o:value("trojan", "Trojan")
-o:value("naive", "Naive")
-if singbox_tags:find("with_quic") then
-	o:value("hysteria", "Hysteria")
-end
-if singbox_tags:find("with_quic") then
-	o:value("tuic", "TUIC")
-end
-if singbox_tags:find("with_quic") then
-	o:value("hysteria2", "Hysteria2")
+if singbox_tags:find("with_naive_outbound") then
+	o:value("naive", "Naive")
 end
 o:value("anytls", "AnyTLS")
-if singbox_tags:find("with_wireguard") then
-	o:value("wireguard", "WireGuard")
-end
-o:value("direct", "Direct")
 o:depends({ custom = false })
-
-o = s:option(DummyValue, "is_endpoint", "")
-o.not_rewrite = true
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
-o:depends({ custom = false, protocol = "wireguard" })
 
 o = s:option(Value, "port", translate("Listen Port"))
 o.datatype = "port"
@@ -102,13 +91,13 @@ o:depends({ protocol = "vmess" })
 o:depends({ protocol = "vless" })
 o:depends({ protocol = "trojan" })
 o:depends({ protocol = "naive" })
-o:depends({ protocol = "hysteria" })
-o:depends({ protocol = "tuic" })
-o:depends({ protocol = "hysteria2" })
 o:depends({ protocol = "anytls" })
-o:depends({ protocol = "wireguard" })
 
 if singbox_tags:find("with_quic") then
+	-- hysteria
+	s.fields["protocol"]:value("hysteria", "Hysteria")
+	s.fields["users"]:depends({ protocol = "hysteria" })
+
 	o = s:option(Value, "hysteria_obfs", translate("Obfs Password"))
 	o:depends({ protocol = "hysteria" })
 
@@ -135,6 +124,10 @@ if singbox_tags:find("with_quic") then
 end
 
 if singbox_tags:find("with_quic") then
+	-- tuic
+	s.fields["protocol"]:value("tuic", "TUIC")
+	s.fields["users"]:depends({ protocol = "tuic" })
+
 	o = s:option(ListValue, "tuic_congestion_control", translate("Congestion control algorithm"))
 	o.default = "cubic"
 	o:value("bbr", translate("BBR"))
@@ -166,6 +159,10 @@ if singbox_tags:find("with_quic") then
 end
 
 if singbox_tags:find("with_quic") then
+	-- hysteria2
+	s.fields["protocol"]:value("hysteria2", "Hysteria2")
+	s.fields["users"]:depends({ protocol = "hysteria2" })
+
 	o = s:option(Flag, "hysteria2_realms", translate("Realms"))
 	o.default = "0"
 	o:depends({ protocol = "hysteria2"})
@@ -181,6 +178,10 @@ if singbox_tags:find("with_quic") then
 
 	o = s:option(DynamicList, "hysteria2_realm_stun", translate("Realm STUN"))
 	o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
+	o:depends({ hysteria2_realms = "1" })
+
+	o = s:option(Flag, "hysteria2_realm_upnp", translate("Enable") .. " UPnP/NAT-PMP", translate("Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."))
+	o.default = "0"
 	o:depends({ hysteria2_realms = "1" })
 
 	o = s:option(ListValue, "hysteria2_obfs_type", translate("Obfs Type"))
@@ -257,7 +258,7 @@ o.validate = function(self, value, t)
 			local ca = s.fields["tls_certificateFile"] and s.fields["tls_certificateFile"]:formvalue(t) or ""
 			local key = s.fields["tls_keyFile"] and s.fields["tls_keyFile"]:formvalue(t) or ""
 			if ca == "" or key == "" then
-				return nil, translate("Public key and Private key path can not be empty!")
+				return nil, translate("Certificate or Private key path can not be empty!")
 			end
 		end
 		return value
@@ -310,8 +311,8 @@ o:depends({ protocol = "hysteria" })
 
 -- [[ TLS部分 ]] --
 
-o = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
-o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
+o = s:option(FileUpload, "tls_certificateFile", translate("Path to the certificate file"), translate("as:") .. "/etc/ssl/fullchain.crt")
+o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".crt"
 if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o:depends({ tls = true, reality = false })
 o:depends({ protocol = "naive" })
@@ -329,7 +330,7 @@ o.validate = function(self, value, t)
 	return nil
 end
 
-o = s:option(FileUpload, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
+o = s:option(FileUpload, "tls_keyFile", translate("Path to the private key file"), translate("as:") .. "/etc/ssl/private.key")
 o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
 if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o:depends({ tls = true, reality = false })
@@ -398,6 +399,10 @@ o:depends({ transport = "ws" })
 o = s:option(Value, "ws_path", translate("WebSocket Path"))
 o:depends({ transport = "ws" })
 
+o = s:option(Value, "ws_earlyDataHeaderName", translate("Early data header name"), translate("Recommended value: Sec-WebSocket-Protocol"))
+o.placeholder = "Sec-WebSocket-Protocol"
+o:depends({ transport = "ws" })
+
 -- [[ HTTPUpgrade部分 ]]--
 
 o = s:option(Value, "httpupgrade_host", translate("HTTPUpgrade Host"))
@@ -432,6 +437,10 @@ o.default = "50"
 o:depends({ tcpbrutal = true })
 
 if singbox_tags:find("with_wireguard") then
+	-- wireguard
+	s.fields["protocol"]:value("wireguard", "WireGuard")
+	s.fields["users"]:depends({ protocol = "wireguard" })
+
 	o = s:option(Flag, "wireguard_system_interface", translate("System interface"))
 	o.default = 0
 	o:depends({ protocol = "wireguard" })
@@ -456,11 +465,38 @@ if singbox_tags:find("with_wireguard") then
 	o:depends({ protocol = "wireguard" })
 end
 
+if version_ge_1_14_0 then
+	-- snell
+	s.fields["protocol"]:value("snell", "Snell")
+	s.fields["users"]:depends({ protocol = "snell" })
+
+	o = s:option(ListValue, "snell_version", translate("Version"))
+	o:value("5")
+	o:value("6")
+	o:depends({ protocol = "snell" })
+
+	o = s:option(Value, "snell_psk", translate("Pre shared key"))
+	o.rmempty = false
+	o:depends({ protocol = "snell" })
+
+	o = s:option(ListValue, "snell_obfs_mode", translate("Obfs"))
+	o:value("none")
+	o:value("http")
+	o:depends({ protocol = "snell", snell_version = "5" })
+
+	o = s:option(ListValue, "snell_mode", translate("Mode"))
+	o:value("default")
+	o:value("unshaped")
+	o:value("unsafe-raw")
+	o:depends({ protocol = "snell", snell_version = "6" })
+end
+
 o = s:option(Flag, "firewall_allow", translate("Firewall Allow"))
 o.default = "0"
 o:depends({ custom = false })
 
 o = s:option(Value, "firewall_allow_src", translate("Source zone"))
+o.rmempty = false
 o.nocreate = true
 o.allowany = true
 o.default = "wan"
@@ -532,4 +568,4 @@ o:value("warn")
 o:value("error")
 o:depends({ log = true })
 
-api.luci_types(s1, s)
+api.type_cbi_section(s1, s)

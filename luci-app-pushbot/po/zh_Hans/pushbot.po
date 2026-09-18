@@ -92,6 +92,15 @@ msgstr "自动刷新"
 msgid "Refresh"
 msgstr "刷新"
 
+msgid "Refresh firewall check"
+msgstr "重检防火墙"
+
+msgid "Refresh traffic source check"
+msgstr "重检流量源"
+
+msgid "Blacklist persist"
+msgstr "黑名单持久化"
+
 msgid "Average load: 0.09 0.28 0.16"
 msgstr "平均负载： 0.09 0.28 0.16"
 
@@ -146,6 +155,9 @@ msgstr "CPU阈值"
 msgid "CPU usage: 92.8%"
 msgstr "CPU占用：92.8%"
 
+msgid "Cancel"
+msgstr "取消"
+
 msgid "Clear log"
 msgstr "清除日志"
 
@@ -184,6 +196,9 @@ msgstr "客户端名： Zed-PC"
 
 msgid "Client name: Zed-iPhone17PM"
 msgstr "客户端名： Zed-iPhone17PM"
+
+msgid "Confirm"
+msgstr "确认"
 
 msgid "Color Settings"
 msgstr "色彩定义"
@@ -485,6 +500,27 @@ msgstr "模式一：脚本挂起"
 msgid "Mode 2: Silent mode"
 msgstr "模式二：静默模式"
 
+msgid "Mode 3: Low frequency"
+msgstr "模式三：低频通知"
+
+msgid "Low frequency time range"
+msgstr "低频时间范围"
+
+msgid "In low frequency mode, same source same category actions only notify once within this time range"
+msgstr "启用后，在低频时间范围内，同一来源的同一类别动作只通知一次"
+
+msgid "30 min"
+msgstr "30 分钟"
+
+msgid "1 hour"
+msgstr "1 小时"
+
+msgid "8 hours"
+msgstr "8 小时"
+
+msgid "1 day"
+msgstr "1 天"
+
 msgid "Modify settings and try to auto-repair the network"
 msgstr "修改相关设置项，尝试自动修复网络"
 
@@ -562,6 +598,9 @@ msgstr "仅通知此接口"
 
 msgid "Not a public IP"
 msgstr "非公网IP"
+
+msgid "Not recommended when the traffic source is nlbwmon"
+msgstr "nlbwmon不建议启用"
 
 msgid "OUI data"
 msgstr "OUI数据"
@@ -929,6 +968,18 @@ msgstr "宽带重拨"
 
 msgid "WAN status"
 msgstr "WAN状态"
+
+msgid "WiFi auth failure alert"
+msgstr "WiFi 认证失败提醒"
+
+msgid "WiFi connect alert"
+msgstr "WiFi 连接提醒"
+
+msgid "Warning"
+msgstr "警告"
+
+msgid "When the traffic source is nlbwmon, resetting the traffic database at midnight has no effect. Are you sure you want to enable it?"
+msgstr "当前流量源为 nlbwmon，每天零点重置流量数据库不会生效。确定要启用吗？"
 
 msgid "Watchlist"
 msgstr "关注列表"

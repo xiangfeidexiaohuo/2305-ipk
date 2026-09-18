@@ -19,9 +19,11 @@ if s1.val["type"] and s1.val["type"] ~= type_name then
 	return
 end
 
-local s = NamedSection(m, arg[1], "server")
+local s = NamedSection(m, arg[1], "tmp_" .. s1.sectiontype)
+s.parent = s1
 s.type_name = type_name
 s.option_prefix = "xray_"
+api.set_type_cbi(s)
 
 local ss_method_list = {
 	"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "xchacha20-poly1305", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"
@@ -44,13 +46,13 @@ o.validate = function(self, value)
 	if v then return v end
 	return nil, translate("Custom Config") .. " " .. translate("Must be JSON text!")
 end
-o.custom_cfgvalue = function(self, section, value)
+o.cfgvalue = function(self, section, value)
 	local config_str = m:get(section, "config_str")
 	if config_str then
 		return api.base64Decode(config_str)
 	end
 end
-o.custom_write = function(self, section, value)
+o.write = function(self, section, value)
 	m:set(section, "config_str", api.base64Encode(value) or "")
 end
 
@@ -149,6 +151,10 @@ o = s:option(DynamicList, "hysteria2_realm_stun", translate("Realm STUN"))
 o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
 o:depends({ hysteria2_realms = "1" })
 
+o = s:option(Flag, "hysteria2_realm_upnp", translate("Enable") .. " UPnP/NAT-PMP", translate("Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."))
+o.default = "0"
+o:depends({ hysteria2_realms = "1" })
+
 o = s:option(ListValue, "hysteria2_obfs_type", translate("Obfs Type"))
 o:value("", translate("Disable"))
 o:value("salamander")
@@ -192,7 +198,7 @@ o.validate = function(self, value, t)
 			local ca = s.fields["tls_certificateFile"] and s.fields["tls_certificateFile"]:formvalue(t) or ""
 			local key = s.fields["tls_keyFile"] and s.fields["tls_keyFile"]:formvalue(t) or ""
 			if ca == "" or key == "" then
-				return nil, translate("Public key and Private key path can not be empty!")
+				return nil, translate("Certificate or Private key path can not be empty!")
 			end
 		end
 		return value
@@ -200,13 +206,18 @@ o.validate = function(self, value, t)
 end
 o:depends({ protocol = "vmess" })
 o:depends({ protocol = "vless" })
+o:depends({ protocol = "http" })
 o:depends({ protocol = "shadowsocks" })
 o:depends({ protocol = "trojan" })
 
 -- [[ REALITY部分 ]] --
 o = s:option(Flag, "reality", translate("REALITY"))
 o.default = 0
-o:depends({ tls = true })
+o:depends({ tls = true, transport = "raw" })
+o:depends({ tls = true, transport = "ws" })
+o:depends({ tls = true, transport = "grpc" })
+o:depends({ tls = true, transport = "httpupgrade" })
+o:depends({ tls = true, transport = "xhttp" })
 
 o = s:option(Value, "reality_private_key", translate("Private Key"))
 o:depends({ reality = true })
@@ -252,9 +263,9 @@ end
 
 -- [[ TLS部分 ]] --
 
-o = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
-o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
-if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
+o = s:option(FileUpload, "tls_certificateFile", translate("Path to the certificate file"), translate("as:") .. "/etc/ssl/fullchain.crt")
+o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. s.section .. ".crt"
+if o and o:formvalue(s.section) then o.default = o:formvalue(s.section) end
 o:depends({ tls = true, reality = false })
 o:depends({ protocol = "hysteria2"})
 o.validate = function(self, value, t)
@@ -268,9 +279,9 @@ o.validate = function(self, value, t)
 	return nil
 end
 
-o = s:option(FileUpload, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
-o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
-if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
+o = s:option(FileUpload, "tls_keyFile", translate("Path to the private key file"), translate("as:") .. "/etc/ssl/private.key")
+o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. s.section .. ".key"
+if o and o:formvalue(s.section) then o.default = o:formvalue(s.section) end
 o:depends({ tls = true, reality = false })
 o:depends({ protocol = "hysteria2"})
 o.validate = function(self, value, t)
@@ -392,13 +403,13 @@ o:depends({ use_finalmask = true })
 o.rows = 10
 o.wrap = "off"
 o.datatype = "json"
-o.custom_cfgvalue = function(self, section, value)
+o.cfgvalue = function(self, section, value)
 	local raw = m:get(section, "finalmask")
 	if raw then
 		return api.base64Decode(raw)
 	end
 end
-o.custom_write = function(self, section, value)
+o.write = function(self, section, value)
 	m:set(section, "finalmask", api.base64Encode(value) or "")
 end
 
@@ -473,6 +484,7 @@ o.default = "0"
 o:depends({ custom = false })
 
 o = s:option(Value, "firewall_allow_src", translate("Source zone"))
+o.rmempty = false
 o.nocreate = true
 o.allowany = true
 o.default = "wan"
@@ -544,4 +556,4 @@ o:value("warning")
 o:value("error")
 o:depends({ log = true })
 
-api.luci_types(s1, s)
+api.type_cbi_section(s1, s)

@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-pushbot
-PKG_VERSION:=5.15
-PKG_RELEASE:=16
+PKG_VERSION:=5.17
+PKG_RELEASE:=23
 
 PKG_MAINTAINER:=tty228 <tty228@yeah.net>  zzsj0928
 
@@ -23,12 +23,25 @@ LUCI_DEPENDS:=+luci-base +iputils-arping +curl +jq
 
 # 汉化包（luci-i18n-*) 版本与主包保持同步
 PKG_PO_VERSION:=$(PKG_VERSION)-r$(PKG_RELEASE)
+# 兼容部分 luci.mk（如 immortalwrt）缺少 zh_Hans 语言定义的情况
+LUCI_LANG.zh_Hans?=简体中文 (Simplified Chinese)
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/pushbot
 /usr/bin/pushbot/api/diy.json
 /usr/bin/pushbot/api/ipv4.list
 /usr/bin/pushbot/api/ipv6.list
+endef
+
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || {
+	[ -f /tmp/pushbot/traffic_source ] && rm -f /tmp/pushbot/traffic_source
+	[ -f /tmp/pushbot/firewall_mode ] && rm -f /tmp/pushbot/firewall_mode
+	[ -f /tmp/pushbot/wlan_interface ] && rm -f /tmp/pushbot/wlan_interface
+	[ -f /tmp/pushbot/wireless_ifs ] && rm -f /tmp/pushbot/wireless_ifs
+}
+exit 0
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk

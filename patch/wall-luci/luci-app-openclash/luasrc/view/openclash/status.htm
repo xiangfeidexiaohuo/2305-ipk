@@ -8,7 +8,6 @@
 <head>
 <script src="/luci-static/resources/openclash/js/common.js?v=<%=plugin_version%>"></script>
 <link rel="stylesheet" href="/luci-static/resources/openclash/css/oc.css?v=<%=plugin_version%>">
-<script src="/luci-static/resources/openclash/js/cm6.min.js?v=<%=plugin_version%>"></script>
 <script src="/luci-static/resources/openclash/js/chart.umd.min.js?v=<%=plugin_version%>"></script>
 </head>
 <fieldset class="cbi-section">
@@ -83,9 +82,20 @@
                         <!-- Row 2: Running Mode & Proxy Mode -->
                         <div class="card-row dual-cards mode-row">
                             <div class="sub-card">
-                                <div class="card-title"><%:Running Mode%></div>
+                                <div class="stats-card-header">
+                                    <div class="stats-title"><%:Running Mode%></div>
+                                    <span class="mode-pill" id="mode-pill">
+                                        <input type="radio" id="dns_fakeip" name="radios-dns" value="fake-ip" onclick="return switch_dns_mode(this.value)"/>
+                                        <label for="dns_fakeip" class="mode-pill-opt" title="<%:Fake-IP%>">
+                                            <svg width="13" height="13"><use href="#oc-icon-cloud-search"/></svg>
+                                        </label>
+                                        <input type="radio" id="dns_redirhost" name="radios-dns" value="redir-host" onclick="return switch_dns_mode(this.value)"/>
+                                        <label for="dns_redirhost" class="mode-pill-opt" title="<%:Redir-Host%>">
+                                            <svg width="13" height="13"><use href="#oc-icon-device-desktop-search"/></svg>
+                                        </label>
+                                    </span>
+                                </div>
                                 <div class="card-content">
-                                    <div class="card-value"><span id="_mode" class="value-indicator"><%:Collecting data...%></span></div>
                                     <div class="card-controls">
                                         <div id="radio-ru-mode" class="cbi-button-group oc-inline-flex">
                                             <input type="radio" id="normal" name="radios-ru" value="" onclick="return switch_run_mode(this.value)"/>
@@ -99,7 +109,9 @@
                                 </div>
                             </div>
                             <div class="sub-card">
-                                <div class="card-title"><%:Proxy Mode%></div>
+                                <div class="stats-card-header">
+                                    <div class="stats-title"><%:Proxy Mode%></div>
+                                </div>
                                 <div class="card-content">
                                     <div class="card-controls">
                                         <div id="radio-mode" class="cbi-button-group oc-inline-flex">
@@ -279,6 +291,7 @@
                                     <button class="dashboard-btn" id="_webm"><%:Collecting data...%></button>
                                     <button class="dashboard-btn" id="_webz"><%:Collecting data...%></button>
                                     <button class="dashboard-btn" id="_webo"><%:Collecting data...%></button>
+                                    <button class="dashboard-btn hidden" id="_web_external"><%:Collecting data...%></button>
                                 </div>
                             </div>
                         </div>
@@ -300,10 +313,14 @@
                         <div class="stats-section">
                             <div class="stats-card-header">
                                 <div class="stats-title"><%:Statistics%></div>
-                                <button type="button" class="icon-btn stats-view-toggle" id="stats-view-toggle" title="<%:Toggle Chart%>">
-                                    <svg id="stats-chart-icon" width="14" height="14"><use href="#oc-icon-chart"/></svg>
-                                    <svg id="stats-cards-icon" width="14" height="14" class="oc-hidden"><use href="#oc-icon-grid"/></svg>
-                                </button>
+                                <div class="icon-pill stats-view-toggle" id="stats-view-toggle" role="group" aria-label="<%:View Mode%>">
+                                    <button type="button" class="icon-pill-opt" id="stats-cards-btn" title="<%:Cards%>" data-view="cards">
+                                        <svg width="13" height="13"><use href="#oc-icon-grid"/></svg>
+                                    </button>
+                                    <button type="button" class="icon-pill-opt" id="stats-chart-btn" title="<%:Chart%>" data-view="chart">
+                                        <svg width="13" height="13"><use href="#oc-icon-chart"/></svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-row stats-grid" id="stats-view-cards">
                                 <div class="sub-card stat-item"><span class="stat-label"><%:Up%></span><span id="upload_" class="stat-value"><span class="stat-num" style="color:var(--success-color)">0</span><span class="stat-unit">KB/S</span></span></div>
@@ -377,6 +394,7 @@
 
 <script src="/luci-static/resources/openclash/js/oc-icons.js?v=<%=plugin_version%>"></script>
 <script type="text/javascript">//<![CDATA[
+    window.ocCM6Url = '/luci-static/resources/openclash/js/cm6.min.js?v=<%=plugin_version%>';
     window.levelTranslations = {
         'info': '<%:Info%>',
         'warning': '<%:Warning%>',
@@ -388,11 +406,13 @@
     };
     var DOMCache = {
         clash: document.getElementById('_clash'),
-        mode: document.getElementById('_mode'),
+        dns_fakeip: document.getElementById('dns_fakeip'),
+        dns_redirhost: document.getElementById('dns_redirhost'),
         web: document.getElementById('_web'),
         webo: document.getElementById('_webo'),
         webm: document.getElementById('_webm'),
         webz: document.getElementById('_webz'),
+        web_external: document.getElementById('_web_external'),
         daip: document.getElementById('_daip'),
         oclog: document.getElementById('_oclog'),
         close_all_connection: document.getElementById('_close_all_connection_btn'),
@@ -429,7 +449,9 @@
     };
 
     var getDashboardBaseURL = ocGetDashboardBaseURL;
+    var getDashboardWebSocketOrigin = ocGetDashboardWebSocketOrigin;
     var buildDashboardURL = ocBuildDashboardURL;
+    var buildExternalDashboardURL = ocBuildExternalDashboardURL;
     var bytesToSize = ocFormatBytes;
     var debounceButton = ocDebounce;
 
@@ -2445,15 +2467,16 @@
                 if (x && x.status == 200 && x.responseText != "" && status) {
                     self.retryCount = 0;
                     var cpuValueNumber = Number(status.cpu);
-                    if (!isFinite(cpuValueNumber) || cpuValueNumber < 0 || cpuValueNumber > 100) cpuValueNumber = 0;
+                    if (!isFinite(cpuValueNumber) || cpuValueNumber < 0) cpuValueNumber = 0;
                     var cpuColor = cpuValueNumber <= 50 ? "var(--success-color)" : (cpuValueNumber <= 80 ? "var(--tip-color)" : "var(--error-color)");
-                    var cpuValue = cpuValueNumber + " %";
+                    var cpuValue = ocFormatOneDecimal(cpuValueNumber) + " %";
                     document.getElementById("cpu_t").innerHTML = ocStatHtml(cpuValue, cpuColor);
 
                     var loadValue = parseFloat(status.load_avg) || 0;
                     if (!isFinite(loadValue) || loadValue < 0) loadValue = 0;
                     var loadColor = loadValue <= 50 ? "var(--success-color)" : (loadValue <= 80 ? "var(--tip-color)" : "var(--error-color)");
-                    document.getElementById("load_a").innerHTML = ocStatHtml(loadValue + " %", loadColor);
+                    var loadText = ocFormatOneDecimal(loadValue);
+                    document.getElementById("load_a").innerHTML = ocStatHtml(loadText + " %", loadColor);
                     StatsChart.feed("cpu", cpuValueNumber);
                     StatsChart.feed("load", loadValue);
                 } else {
@@ -2925,21 +2948,31 @@
                 this.statusEl.textContent = '';
             }
 
+            var self = this;
             if (!this.editor) {
                 var prompt = this.buildPrompt();
                 this.textarea.value = prompt;
-                var container = document.getElementById('usage-help-editor');
-                var isDark = isDarkBackground(document.body);
-                var exts = [CM6.lineNumbers(), CM6.EditorView.lineWrapping, CM6.themeExtension(isDark), CM6.markdown()];
-                var view = new CM6.EditorView({
-                    state: CM6.EditorState.create({ doc: prompt, extensions: exts })
+                this.statusEl.textContent = '<%:Loading...%>';
+                ocRequireCM6(function() {
+                    var container = document.getElementById('usage-help-editor');
+                    var isDark = isDarkBackground(document.body);
+                    var exts = [CM6.lineNumbers(), CM6.EditorView.lineWrapping, CM6.themeExtension(isDark), CM6.markdown()];
+                    var view = new CM6.EditorView({
+                        state: CM6.EditorState.create({ doc: prompt, extensions: exts })
+                    });
+                    container.innerHTML = '';
+                    container.appendChild(view.dom);
+                    self.editor = view;
+                    self.statusEl.textContent = '';
+                    setTimeout(function() {
+                        if (self.editor && self.editor.contentDOM) {
+                            self.editor.focus();
+                        }
+                    }, 100);
                 });
-                container.innerHTML = '';
-                container.appendChild(view.dom);
-                this.editor = view;
+                return;
             }
 
-            var self = this;
             setTimeout(function() {
                 if (self.editor && self.editor.contentDOM) {
                     self.editor.focus();
@@ -3006,7 +3039,8 @@
         view: 'cards',
         chart: null,
         latest: { up: 0, down: 0, mem: 0, cpu: 0, load: 0, conn: 0 },
-        buf: { t: [], up: [], down: [], mem: [], cpu: [], load: [], conn: [] },
+        buf: { t: [], realT: [], up: [], down: [], mem: [], cpu: [], load: [], conn: [] },
+        lastTick: 0,
         timer: null,
         metrics: null,
         totals: { up: null, down: null },
@@ -3088,8 +3122,10 @@
             document.getElementById('stats-view-chart').classList.toggle('oc-hidden', this.view !== 'chart');
             var statsTabs = document.getElementById('stats-tabs');
             if (statsTabs) statsTabs.classList.toggle('oc-hidden', this.view !== 'chart');
-            document.getElementById('stats-chart-icon').classList.toggle('oc-hidden', this.view !== 'cards');
-            document.getElementById('stats-cards-icon').classList.toggle('oc-hidden', this.view !== 'chart');
+            var cardsBtn = document.getElementById('stats-cards-btn');
+            var chartBtn = document.getElementById('stats-chart-btn');
+            if (cardsBtn) cardsBtn.classList.toggle('active', this.view === 'cards');
+            if (chartBtn) chartBtn.classList.toggle('active', this.view === 'chart');
         },
 
         initCardDots: function() {
@@ -3133,20 +3169,20 @@
             this.updateLegendValues();
 
             if (this.view === 'chart' && this.chart) {
-                var now = Date.now();
-                this.pushSample(now);
+                this.pushSample(Date.now());
                 this.chartDirty = true;
                 this.update(true);
             }
         },
 
         resetBuffer: function(now) {
-            var keys = ['t', 'up', 'down', 'mem', 'cpu', 'load', 'conn'];
+            var keys = ['t', 'realT', 'up', 'down', 'mem', 'cpu', 'load', 'conn'];
             for (var i = 0; i < keys.length; i++) {
                 this.buf[keys[i]] = [];
             }
             for (var j = 0; j < this.N; j++) {
-                this.buf.t.push(now - (this.N - 1 - j) * 1000);
+                this.buf.t.push(j * 1000);
+                this.buf.realT.push(now - (this.N - 1 - j) * 1000);
                 this.buf.up.push(0);
                 this.buf.down.push(0);
                 this.buf.mem.push(0);
@@ -3172,46 +3208,30 @@
 
         tick: function() {
             var now = Date.now();
-            var lastT = this.buf.t[this.buf.t.length - 1] || 0;
-            var hasTimeGap = now - lastT > 3000;
-            if (hasTimeGap) {
-                this.handleTimeGap(now, now - lastT);
-            } else {
-                this.pushSample(now);
-            }
+            var gap = this.lastTick ? now - this.lastTick : 0;
+            this.lastTick = now;
+            var isRecovery = gap > 3000;
+            this.pushSample(now);
             this.rateUnitCache = null;
             if (this.view === 'chart') {
                 this.updateLegendValues();
                 if (this.chart) {
-                    this.update(hasTimeGap);
+                    this.update(isRecovery);
                 }
             }
         },
 
         pushSample: function(now) {
-            this.buf.t.push(now);
+            var lastX = this.buf.t.length ? this.buf.t[this.buf.t.length - 1] : 0;
+            this.buf.t.push(lastX + 1000);
             this.buf.t.shift();
+            this.buf.realT.push(now);
+            this.buf.realT.shift();
             var keys = ['up', 'down', 'mem', 'cpu', 'load', 'conn'];
             for (var i = 0; i < keys.length; i++) {
                 var k = keys[i];
                 this.buf[k].push(this.latest[k]);
                 this.buf[k].shift();
-            }
-        },
-
-        handleTimeGap: function(now, gap) {
-            var maxGap = (this.N - 1) * 1000;
-            if (gap > maxGap) {
-                this.resetBuffer(now - 1000);
-                this.chartDirty = true;
-            } else {
-                var shift = gap - 1000;
-                this.timebaseShift = shift;
-                var t = this.buf.t;
-                for (var i = 0; i < t.length; i++) {
-                    t[i] += shift;
-                }
-                this.pushSample(now);
             }
         },
 
@@ -3222,7 +3242,7 @@
                 var key = series[j].key;
                 var arr = [];
                 for (var i = 0; i < this.N; i++) {
-                    arr.push({ x: this.buf.t[i] + this.rightLeadMs, y: this.buf[key][i] });
+                    arr.push({ x: this.buf.t[i] + this.rightLeadMs, y: this.buf[key][i], r: this.buf.realT[i] });
                 }
                 c.data.datasets[j].data = arr;
             }
@@ -3230,9 +3250,13 @@
 
         bind: function() {
             var self = this;
-            var toggle = document.getElementById('stats-view-toggle');
-            if (toggle) {
-                toggle.addEventListener('click', function() { self.toggleView(); });
+            var cardsBtn = document.getElementById('stats-cards-btn');
+            var chartBtn = document.getElementById('stats-chart-btn');
+            if (cardsBtn) {
+                cardsBtn.addEventListener('click', function() { self.setView('cards'); });
+            }
+            if (chartBtn) {
+                chartBtn.addEventListener('click', function() { self.setView('chart'); });
             }
             var tabs = document.getElementById('stats-tabs');
             if (tabs) {
@@ -3272,8 +3296,10 @@
             }
         },
 
-        toggleView: function() {
-            this.view = this.view === 'cards' ? 'chart' : 'cards';
+        setView: function(view) {
+            if (view !== 'cards' && view !== 'chart') return;
+            if (this.view === view) return;
+            this.view = view;
             this.applyView();
             this.notifyDataSource();
             localStorage.setItem('oc-stats-view', this.view);
@@ -3316,7 +3342,7 @@
 
         formatLegendValue: function(key, val) {
             if (key === 'mem') return Math.round(val) + ' MB';
-            if (key === 'cpu' || key === 'load') return Math.round(val) + ' %';
+            if (key === 'cpu' || key === 'load') return ocFormatOneDecimal(val) + ' %';
             if (key === 'conn') return String(Math.round(val));
             return String(Math.round(val * 10) / 10);
         },
@@ -3411,7 +3437,7 @@
                         var color = self.seriesColor(s.key);
                         return {
                             label: s.name,
-                            data: self.buf[s.key].map(function(v, i) { return { x: self.buf.t[i] + self.rightLeadMs, y: v }; }),
+                            data: self.buf[s.key].map(function(v, i) { return { x: self.buf.t[i] + self.rightLeadMs, y: v, r: self.buf.realT[i] }; }),
                             parsing: false,
                             borderColor: color,
                             backgroundColor: self.hexToRgba(color, 0.14),
@@ -3436,15 +3462,77 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: p.panel,
-                            titleColor: p.panelText,
-                            bodyColor: p.panelText,
-                            padding: 8,
-                            cornerRadius: 6,
-                            displayColors: false,
+                            enabled: false,
+                            external: function(context) {
+                                var chart = context.chart;
+                                var tooltip = context.tooltip;
+                                var canvas = chart.canvas;
+                                var wrap = canvas.parentNode;
+                                if (!wrap) return;
+                                var el = wrap.querySelector('.oc-stats-tooltip');
+                                if (!el) {
+                                    el = document.createElement('div');
+                                    el.className = 'oc-stats-tooltip';
+                                    wrap.appendChild(el);
+                                }
+                                if (tooltip.opacity === 0) {
+                                    el.style.display = 'none';
+                                    return;
+                                }
+                                var panel = self.ocVar('--bg-white', '#ffffff');
+                                var text = self.ocVar('--text-primary', '#374151');
+                                var titleBg = self.ocVar('--bg-gray', 'rgba(59,130,246,0.1)');
+                                var border = self.ocVar('--border-light', '#e2e8f0');
+
+                                var html = '';
+                                if (tooltip.title && tooltip.title.length) {
+                                    html += '<div style="background:' + titleBg + ';color:' + text + ';padding:5px 10px;font-weight:600;border-bottom:1px solid ' + border + ';">' + tooltip.title[0] + '</div>';
+                                }
+                                if (tooltip.body) {
+                                    for (var i = 0; i < tooltip.body.length; i++) {
+                                        var b = tooltip.body[i];
+                                        var dp = tooltip.dataPoints && tooltip.dataPoints[i];
+                                        var s = dp ? self.metrics[self.metric].series[dp.datasetIndex] : null;
+                                        var color = s ? self.seriesColor(s.key) : '#888';
+                                        var rowText = b.lines ? b.lines.join(' ') : '';
+                                        html += '<div style="color:' + text + ';padding:4px 10px;display:flex;align-items:center;gap:6px;"><i style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex:0 0 auto;display:inline-block;"></i><span>' + rowText + '</span></div>';
+                                    }
+                                }
+                                el.innerHTML = html;
+
+                                el.style.position = 'absolute';
+                                el.style.zIndex = '10';
+                                el.style.pointerEvents = 'none';
+                                el.style.backgroundColor = panel;
+                                el.style.border = '1px solid ' + border;
+                                el.style.borderRadius = '8px';
+                                el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                                el.style.fontSize = '12px';
+                                el.style.overflow = 'hidden';
+                                el.style.whiteSpace = 'nowrap';
+                                el.style.display = 'block';
+
+                                var wrapRect = wrap.getBoundingClientRect();
+                                var canvasRect = canvas.getBoundingClientRect();
+                                var x = tooltip.caretX + canvasRect.left - wrapRect.left;
+                                var y = tooltip.caretY + canvasRect.top - wrapRect.top;
+                                var tw = el.offsetWidth;
+                                var th = el.offsetHeight;
+                                y = y - th - 12;
+                                if (y < 2) {
+                                    y = tooltip.caretY + canvasRect.top - wrapRect.top + 14;
+                                }
+                                if (y + th > wrap.clientHeight - 2) {
+                                    y = wrap.clientHeight - th - 2;
+                                }
+                                if (y < 2) y = 2;
+                                x = Math.max(2, Math.min(x, wrap.clientWidth - tw - 2));
+                                el.style.left = x + 'px';
+                                el.style.top = y + 'px';
+                            },
                             callbacks: {
                                 title: function(items) {
-                                    return self.fmtTime(items[0].parsed.x);
+                                    return self.fmtTime(items[0].raw.r);
                                 },
                                 label: function(item) {
                                     var key = series[item.datasetIndex].key;
@@ -3467,6 +3555,7 @@
                             beginAtZero: true,
                             grace: '20%',
                             grid: {
+                                drawTicks: false,
                                 color: function(ctx) {
                                     if (ctx.tick && ctx.tick.value === 0) return 'transparent';
                                     return axisRgba;
@@ -3476,6 +3565,7 @@
                             ticks: {
                                 color: p.text,
                                 font: { size: 11 },
+                                padding: 8,
                                 callback: function(value) {
                                     return self.formatYAxis(value);
                                 }
@@ -3498,21 +3588,17 @@
             var c = this.chart;
             if (!c) return;
             var series = this.metrics[this.metric].series;
-            var now = Date.now();
+            var t = this.buf.t;
+            var rt = this.buf.realT;
+            var curX = t.length ? t[t.length - 1] : 0;
+            var curReal = rt.length ? rt[rt.length - 1] : 0;
 
             if (this.chartDirty) {
                 this.chartDirty = false;
                 this.syncChartFromBuf(series);
-            } else if (this.timebaseShift) {
-                var shift = this.timebaseShift;
-                this.timebaseShift = 0;
-                for (var si = 0; si < series.length; si++) {
-                    var d = c.data.datasets[si].data;
-                    for (var di = 0; di < d.length; di++) {
-                        d[di].x += shift;
-                    }
-                }
             }
+
+            var newX = curX + this.rightLeadMs;
 
             for (var i = 0; i < c.data.datasets.length; i++) {
                 var data = c.data.datasets[i].data;
@@ -3521,13 +3607,14 @@
                 }
             }
             var first = c.data.datasets[0].data[0];
-            var min = first ? first.x + this.rightLeadMs * 3 : now - (this.N - 1) * 1000;
+            var min = first ? first.x + this.rightLeadMs * 3 : curX - (this.N - 1) * 1000;
             for (var j = 0; j < series.length; j++) {
-                c.data.datasets[j].data.push({ x: now + this.rightLeadMs, y: this.latest[series[j].key] });
+                c.data.datasets[j].data.push({ x: newX, y: this.latest[series[j].key], r: curReal });
             }
             c.options.scales.x.min = min;
-            c.options.scales.x.max = now;
+            c.options.scales.x.max = curX;
             if (isRecovery) {
+                c.stop();
                 c.update('none');
             } else {
                 c.update();
@@ -3544,6 +3631,8 @@
 
     var pluginToggleUserAction = false;
 
+    get_op_mode();
+
     XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "services", "openclash", "status")%>', null, function(x, status) {
         if (x && x.status == 200) {
             var updates = [];
@@ -3558,13 +3647,6 @@
             }
 
             if (status.run_mode && !SettingsManager.pendingOperations.has('run_mode_' + status.run_mode)) {
-                if (status.run_mode.indexOf("fake-ip") === 0) {
-                    DOMCache.mode.innerHTML = "<b style=color:var(--success-color)><%:Fake-IP%></b>";
-                    DOMCache.radio_run_normal.innerHTML = "<%:Enhance%>";
-                } else if (status.run_mode.indexOf("redir-host") === 0) {
-                    DOMCache.mode.innerHTML = "<b style=color:var(--success-color)><%:Redir-Host%></b>";
-                    DOMCache.radio_run_normal.innerHTML = "<%:Compat%>";
-                }
                 var expectedValue = status.run_mode.split("-")[2] == undefined ? "" : ("-" + status.run_mode.split("-")[2]);
                 for (var i = 0; i < DOMCache.radio_ru.length; i++) {
                     if (DOMCache.radio_ru[i].value == expectedValue && !DOMCache.radio_ru[i].checked) {
@@ -3612,6 +3694,9 @@
             var webzContent = status.clash ? '<input type="button" class="dashboard-btn" value="<%:Zashboard%>" onclick="return net_zashboard(this)"/>' : '<input type="button" class="dashboard-btn" value="<%:Zashboard%>" onclick="event.preventDefault(); event.stopPropagation(); return false;"/>';
             updates.push({element: DOMCache.webz, content: webzContent});
 
+            var externalWebContent = status.clash ? '<input type="button" class="dashboard-btn" value="<%:External Dashboard%>" onclick="return external_dashboard(this)"/>' : '<input type="button" class="dashboard-btn" value="<%:External Dashboard%>" onclick="event.preventDefault(); event.stopPropagation(); return false;"/>';
+            updates.push({element: DOMCache.web_external, content: externalWebContent});
+
             var closeConnContent = status.clash ? '<input type="button" class="dashboard-btn" value="<%:Close Connect%>" onclick="return b_close_all_connection(this)"/>' : '<input type="button" class="dashboard-btn" value="<%:Close Connect%>" onclick="event.preventDefault(); event.stopPropagation(); return false;"/>';
             updates.push({element: document.getElementById('_close_all_connection_btn'), content: closeConnContent});
 
@@ -3642,21 +3727,16 @@
                 DOMCache.webz.classList.add('hidden');
             }
 
+            DOMCache.web_external.classList.toggle('hidden', !ocGetCustomDashboardURL(status));
+
             StateManager.current_status = status;
 
             if (status.daip) {
                 var daipContent, dapoContent;
 
-                if (status.daip && window.location.hostname == status.daip) {
-                    dapoContent = status.cn_port ? ":"+status.cn_port : "";
-                    daipContent = status.daip ? "<b style=color:var(--success-color)>"+status.daip+dapoContent+"</b>" : "<b style=color:var(--error-color)>"+"<%:Not Set%>"+"</b>";
-                } else if (status.daip && window.location.hostname != status.daip && status.db_foward_domain && status.db_foward_port) {
-                    dapoContent = status.db_foward_port ? ":"+status.db_foward_port : "";
-                    daipContent = status.db_foward_domain ? "<b style=color:var(--success-color)>"+status.db_foward_domain+dapoContent+"</b>" : "<b style=color:var(--error-color)>"+"<%:Not Set%>"+"</b>";
-                } else {
-                    dapoContent = status.cn_port ? ":"+status.cn_port : "";
-                    daipContent = status.daip ? "<b style=color:var(--success-color)>"+status.daip+dapoContent+"</b>" : "<b style=color:var(--error-color)>"+"<%:Not Set%>"+"</b>";
-                }
+                var dashboardBase = getDashboardBaseURL(status);
+                dapoContent = dashboardBase.port ? ":" + dashboardBase.port : "";
+                daipContent = "<b style=color:var(--success-color)>" + dashboardBase.host + dapoContent + "</b>";
 
                 DOMCache.daip.innerHTML = daipContent;   
 
@@ -3786,29 +3866,10 @@
             return false;
         }
 
-        StatsWSMeta.protocol = getWebSocketProtocol(status);
+        StatsWSMeta.protocol = getDashboardWebSocketOrigin(status);
         StatsWSMeta.token = status.dase;
         syncDataSource();
         return true;
-    }
-
-    function getWebSocketProtocol(status) {
-        var protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
-        var host, port;
-
-        if (status.daip && window.location.hostname === status.daip) {
-            host = status.daip;
-            port = status.cn_port;
-        } else if (status.daip && window.location.hostname !== status.daip && 
-                   status.db_foward_domain && status.db_foward_port) {
-            host = status.db_foward_domain;
-            port = status.db_foward_port;
-        } else {
-            host = status.daip;
-            port = status.cn_port;
-        }
-
-        return protocol + host + ":" + port;
     }
 
     function AnnouncementAnimator(config) {
@@ -4101,14 +4162,6 @@
 
         StateManager.cachedXHRGet('<%=luci.dispatcher.build_url("admin", "services", "openclash", "get_run_mode")%>', function(x, status) {
             if (x && x.status == 200 && status.mode) {
-                if (status.mode == "fake-ip" || status.mode == "fake-ip-tun" || status.mode == "fake-ip-mix") {
-                    DOMCache.mode.innerHTML = "<b style=color:var(--success-color)><%:Fake-IP%></b>";
-                    DOMCache.radio_run_normal.innerHTML = "<%:Enhance%>";
-                } else if (status.mode == "redir-host" || status.mode == "redir-host-tun" ||  status.mode == "redir-host-mix") {
-                    DOMCache.mode.innerHTML = "<b style=color:var(--success-color)><%:Redir-Host%></b>";
-                    DOMCache.radio_run_normal.innerHTML = "<%:Compat%>";
-                }
-
                 var expectedValue = status["mode"].split("-")[2] == undefined ? "" : ("-" + status["mode"].split("-")[2]);
                 var operationKey = 'run_mode_' + status.mode;
 
@@ -4130,6 +4183,79 @@
             value, 
             '<%=luci.dispatcher.build_url("admin", "services", "openclash", "switch_run_mode")%>'
         );
+    }
+
+    var currentDnsMode = '';
+
+    function setDnsModeUI(mode) {
+        currentDnsMode = mode;
+        if (DOMCache.dns_fakeip) DOMCache.dns_fakeip.checked = (mode === 'fake-ip');
+        if (DOMCache.dns_redirhost) DOMCache.dns_redirhost.checked = (mode === 'redir-host');
+        if (DOMCache.radio_run_normal) {
+            DOMCache.radio_run_normal.innerHTML = (mode === 'fake-ip') ? '<%:Enhance%>' : '<%:Compat%>';
+        }
+    }
+
+    function get_op_mode() {
+        StateManager.cachedXHRGet('<%=luci.dispatcher.build_url("admin", "services", "openclash", "op_mode")%>', function(x, status) {
+            if (x && x.status == 200 && status.op_mode) {
+                setDnsModeUI(status.op_mode);
+            }
+        }, true);
+    }
+
+    function switch_dns_mode(value) {
+        var opKey = 'dns_mode_' + value;
+        if (SettingsManager.pendingOperations.has(opKey) || value === currentDnsMode) {
+            return false;
+        }
+        SettingsManager.pendingOperations.add(opKey);
+        SettingsManager.pausePoll('run_mode', 3000);
+
+        var previous = currentDnsMode;
+
+        LogManager.startLogDisplay('<%:Saving...%>', false, 'init');
+        setDnsModeUI(value);
+        if (DOMCache.dns_fakeip) DOMCache.dns_fakeip.disabled = true;
+        if (DOMCache.dns_redirhost) DOMCache.dns_redirhost.disabled = true;
+        for (var r = 0; r < DOMCache.radio_ru.length; r++) {
+            DOMCache.radio_ru[r].disabled = true;
+        }
+
+        var suffix = '';
+        var ru = document.getElementsByName("radios-ru");
+        for (var i = 0; i < ru.length; i++) {
+            if (ru[i].checked) {
+                suffix = ru[i].value;
+                break;
+            }
+        }
+
+        function finish(success) {
+            SettingsManager.pendingOperations.delete(opKey);
+            if (DOMCache.dns_fakeip) DOMCache.dns_fakeip.disabled = false;
+            if (DOMCache.dns_redirhost) DOMCache.dns_redirhost.disabled = false;
+            for (var r = 0; r < DOMCache.radio_ru.length; r++) {
+                DOMCache.radio_ru[r].disabled = false;
+            }
+            if (success) {
+                get_op_mode();
+            } else {
+                setDnsModeUI(previous);
+                alert('<%:Switch mode failed!%>');
+            }
+        }
+
+        XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "switch_mode")%>', null, function(x1) {
+            if (!x1 || x1.status != 200) {
+                setTimeout(function() { finish(false); }, 1500);
+                return;
+            }
+            XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "switch_run_mode")%>', { run_mode: suffix }, function(x2) {
+                setTimeout(function() { finish(x2 && x2.status == 200); }, 1500);
+            });
+        });
+        return true;
     }
 
     function ws_tmessage(event) {
@@ -4284,6 +4410,17 @@
         return false;
     }
 
+    function external_dashboard(btn) {
+        btn.disabled = true;
+        btn.value = '<%:External Dashboard%>';
+        var status = StateManager.current_status;
+        if (!status) { setTimeout(function() { external_dashboard(btn); }, 500); return false; }
+        var url = buildExternalDashboardURL(status);
+        if (url) winOpen(url);
+        btn.disabled = false;
+        return false;
+    }
+
     function homepage() {
         winOpen('https://github.com/vernesong/OpenClash');
     }
@@ -4434,28 +4571,18 @@
     }
 
     function copyAddress() {
+        var currentStatus = StateManager.current_status;
+        var externalURL = currentStatus ? buildExternalDashboardURL(currentStatus) : '';
+        if (externalURL) {
+            ocCopyToClipboard(externalURL, DOMCache.copy_address, '<%:Control panel address copied:%> ', '<%:Copy failed, please copy manually:%>');
+            return false;
+        }
+
         XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "dashboard_type")%>', null, function(x, status) {
             if (x && x.status == 200) {
                 var panel = status.default_dashboard;
                 if (panel && StateManager.current_status[panel]) {
-                    var url;
-                    var currentStatus = StateManager.current_status;
-                    if (currentStatus.daip && window.location.hostname == currentStatus.daip) {
-                        url = 'http://' + window.location.hostname + ':' + currentStatus.cn_port + '/ui/' + panel;
-                    } else if (currentStatus.daip && window.location.hostname != currentStatus.daip && currentStatus.db_foward_domain && currentStatus.db_foward_port) {
-                        var ui_proto = currentStatus.db_forward_ssl == 0 ? 'http://' : 'https://';
-                        url = ui_proto + currentStatus.db_foward_domain + ':' + currentStatus.db_foward_port + '/ui/' + panel;
-                    } else {
-                        url = 'http://' + window.location.hostname + ':' + currentStatus.cn_port + '/ui/' + panel;
-                    }
-
-                    if (panel === 'zashboard' || panel === 'metacubexd') {
-                        url += '/#/setup?hostname=' + (currentStatus.daip && window.location.hostname == currentStatus.daip ? window.location.hostname : (currentStatus.db_foward_domain || window.location.hostname)) + '&port=' + (currentStatus.daip && window.location.hostname == currentStatus.daip ? currentStatus.cn_port : (currentStatus.db_foward_port || currentStatus.cn_port)) + (currentStatus.dase ? '&secret=' + currentStatus.dase : '');
-                    } else if (panel === 'yacd') {
-                        url += '/?hostname=' + (currentStatus.daip && window.location.hostname == currentStatus.daip ? window.location.hostname : (currentStatus.db_foward_domain || window.location.hostname)) + '&port=' + (currentStatus.daip && window.location.hostname == currentStatus.daip ? currentStatus.cn_port : (currentStatus.db_foward_port || currentStatus.cn_port)) + (currentStatus.dase ? '&secret=' + currentStatus.dase : '');
-                    } else if (panel === 'dashboard') {
-                        url += '/#/?host=' + (currentStatus.daip && window.location.hostname == currentStatus.daip ? window.location.hostname : (currentStatus.db_foward_domain || window.location.hostname)) + '&port=' + (currentStatus.daip && window.location.hostname == currentStatus.daip ? currentStatus.cn_port : (currentStatus.db_foward_port || currentStatus.cn_port)) + (currentStatus.dase ? '&secret=' + currentStatus.dase : '');
-                    }
+                    var url = buildDashboardURL(currentStatus, panel, panel === 'zashboard' || panel === 'metacubexd');
 
                     ocCopyToClipboard(url, DOMCache.copy_address, '<%:Control panel address copied:%> ', '<%:Copy failed, please copy manually:%>');
                 } else {

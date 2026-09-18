@@ -2098,10 +2098,10 @@ msgid "Access Control:"
 msgstr "访问控制："
 
 msgid "Add node to the load balancer is directly connected to %s[%s]."
-msgstr "加入负载均衡的节点到%s[%s]直连完成。"
+msgstr "加入负载均衡节点IP到%s[%s]直连豁免(防回环)完成。"
 
 msgid "Add all %s nodes to %s[%s] direct connection complete."
-msgstr "加入所有%s节点到%s[%s]直连完成。"
+msgstr "加入所有%s节点服务器IP到%s[%s]直连豁免(防回环)完成。"
 
 msgid "Starting to load %s firewall rules..."
 msgstr "开始加载 %s 防火墙规则..."
@@ -2160,23 +2160,8 @@ msgstr "删除 %s 规则完成。"
 msgid "%s firewall rules load complete!"
 msgstr "%s 防火墙规则加载完成！"
 
-msgid "Socks switch detection: Unknown error."
-msgstr "Socks切换检测：未知错误。"
-
-msgid "Socks switch detection: Unable to connect to the network. Please check if the network is working properly!"
-msgstr "Socks切换检测：无法连接到网络，请检查网络是否正常！"
-
-msgid "Socks switch detection: Primary node 【%s: [%s]】 is normal. Switch to the primary node!"
-msgstr "Socks切换检测：%s 主节点【%s：[%s]】正常，切换到主节点！"
-
-msgid "Socks switch detection: %s node switch complete!"
-msgstr "Socks切换检测：%s 节点切换完毕！"
-
-msgid "Socks switch detection: %s 【%s:[%s]】 normal."
-msgstr "Socks切换检测：%s 【%s:[%s]】 正常。"
-
-msgid "switch to %s test detect!"
-msgstr "切换到 %s 检测！"
+msgid "main node"
+msgstr "主节点"
 
 msgid "backup node"
 msgstr "备用节点"
@@ -2184,17 +2169,35 @@ msgstr "备用节点"
 msgid "next backup node"
 msgstr "下一个备用节点"
 
-msgid "main node"
-msgstr "主节点"
+msgid "Socks switch detection: Port [%s] try %s [%s:%s]."
+msgstr "Socks切换检测：端口 [%s] 尝试 %s 【%s：%s】。"
 
-msgid "Socks switch detection: Unknown error."
-msgstr "Socks切换检测：未知错误。"
+msgid "Socks switch detection: Port [%s] [%s:[%s]] normal, switch to this node!"
+msgstr "Socks切换检测：端口 [%s] 【%s:[%s]】 正常，切换到此节点！"
 
-msgid "Socks switch detection: %s 【%s:[%s]】 abnormal, %s"
-msgstr "Socks切换检测：%s 【%s:[%s]】 异常，%s"
+msgid "Socks switch detection: Port [%s] node switch complete!"
+msgstr "Socks切换检测：端口 [%s] 节点切换完毕！"
 
-msgid "Socks switch detection: %s 【%s:[%s]】 normal, switch to this node!"
-msgstr "Socks切换检测：%s 【%s:[%s]】 正常，切换到此节点！"
+msgid "Socks switch detection: Port [%s] [%s:[%s]] abnormal."
+msgstr "Socks切换检测：端口 [%s] 异常。"
+
+msgid "Socks switch detection: Port [%s] all nodes are unavailable!"
+msgstr "Socks切换检测：端口 [%s] 所有节点均不可用！"
+
+msgid "Socks switch detection: Port [%s] Unknown error."
+msgstr "Socks切换检测：端口 [%s] 未知错误。"
+
+msgid "Socks switch detection: Port [%s] Unable to connect to the network. Please check if the network is working properly!"
+msgstr "Socks切换检测：端口 [%s] 无法连接到网络，请检查网络是否正常！"
+
+msgid "Socks switch detection: Port [%s] Primary node [%s: [%s]] is normal. Switch to the primary node!"
+msgstr "Socks切换检测：端口 [%s] 主节点【%s：[%s]】正常，切换到主节点！"
+
+msgid "Socks switch detection: Port [%s] [%s:[%s]] normal."
+msgstr "Socks切换检测：端口 [%s] 【%s:[%s]】 正常。"
+
+msgid "Socks switch detection: Port [%s] Number of backup nodes: %s"
+msgstr "Socks切换检测：端口 [%s] 后备节点数量：%s"
 
 msgid "Restart dnsmasq service."
 msgstr "重启 dnsmasq 服务。"
@@ -2406,6 +2409,9 @@ msgstr "Gecko 包大小（最小）"
 msgid "Gecko Packet Size (max)"
 msgstr "Gecko 包大小（最大）"
 
+msgid "Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."
+msgstr "在网关上启用 UPnP/NAT-PMP 端口映射以提升打洞成功率。"
+
 msgid "valid time (hh:mm)"
 msgstr "有效时间（hh:mm）"
 
@@ -2423,3 +2429,7 @@ msgstr "配置支持的密码套件列表。"
 
 msgid "This username already exists."
 msgstr "该用户名已存在。"
+
+msgid "Update Options"
+msgstr "更新选项"
+

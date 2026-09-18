@@ -1253,6 +1253,9 @@ msgstr "访问控制"
 msgid "ACLs is a tools which used to designate specific IP proxy mode."
 msgstr "访问控制列表是用于指定特殊 IP 代理模式的工具。"
 
+msgid "Use global configuration when using the global node."
+msgstr "与全局节点相同时，将使用全局配置。"
+
 msgid "Example:"
 msgstr "例："
 
@@ -1449,7 +1452,7 @@ msgid "Private Key"
 msgstr "私钥"
 
 msgid "Pre shared key"
-msgstr "额外的对称加密密钥"
+msgstr "预共享密钥"
 
 msgid "Allowed IPs"
 msgstr "允许的 IP"
@@ -1598,17 +1601,20 @@ msgstr "远程端口"
 msgid "as:"
 msgstr "如："
 
-msgid "Public key absolute path"
-msgstr "公钥文件绝对路径"
+msgid "Path to the certificate file"
+msgstr "证书文件路径"
 
-msgid "Private key absolute path"
-msgstr "私钥文件绝对路径"
+msgid "Path to the private key file"
+msgstr "私钥文件路径"
+
+msgid "Path to the ECH key file"
+msgstr "ECH 密钥路径"
 
 msgid "Can't find this file!"
 msgstr "找不到这个文件！"
 
-msgid "Public key and Private key path can not be empty!"
-msgstr "公钥和私钥文件路径不能为空！"
+msgid "Certificate or Private key path can not be empty!"
+msgstr "证书或私钥文件路径不能为空！"
 
 msgid "Server-Side"
 msgstr "服务器端"
@@ -1636,36 +1642,6 @@ msgstr "启用节点日志"
 
 msgid "Log Level"
 msgstr "日志等级"
-
-msgid "Advanced log feature"
-msgstr "高级日志功能"
-
-msgid "For professionals only."
-msgstr "仅限专业人士使用。"
-
-msgid "Persist log file directory"
-msgstr "持久性日志文件目录"
-
-msgid "The path to the directory used to store persist log files, the \"/\" at the end can be omitted. Leave it blank to disable this feature."
-msgstr "用来存储持久性日志文件的目录路径，末尾的 “/” 可以省略。留空以禁用此功能。"
-
-msgid "Logging to system log"
-msgstr "记录到系统日志"
-
-msgid "Logging to the system log for more advanced functions. For example, send logs to a dedicated log server."
-msgstr "将日志记录到系统日志，以实现更加高级的功能。例如，把日志发送到专门的日志服务器。"
-
-msgid "Log Event Filter"
-msgstr "日志事件过滤器"
-
-msgid "Support regular expression."
-msgstr "支持正则表达式。"
-
-msgid "Shell Command"
-msgstr "Shell 命令"
-
-msgid "Shell command to execute, replace log content with %s."
-msgstr "要执行的 Shell 命令，用 %s 代替日志内容。"
 
 msgid "Not enabled log"
 msgstr "未启用日志"
@@ -1738,12 +1714,6 @@ msgstr "XUDP 最大并发连接数"
 
 msgid "Padding"
 msgstr "填充"
-
-msgid "Enable early data"
-msgstr "启用前置数据"
-
-msgid "Early data length"
-msgstr "前置数据最大长度"
 
 msgid "Early data header name"
 msgstr "前置数据 HTTP 头名"
@@ -1992,8 +1962,14 @@ msgstr "上传恢复"
 msgid "CLOSE WIN"
 msgstr "关闭窗口"
 
-msgid "Restore to default configuration"
-msgstr "恢复默认配置"
+msgid "Reset %s Configuration"
+msgstr "重置%s配置"
+
+msgid "Client"
+msgstr "客户端"
+
+msgid "Server"
+msgstr "服务端"
 
 msgid "Do Reset"
 msgstr "执行重置"
@@ -2007,11 +1983,11 @@ msgstr "文件类型无效，请上传一个 .tar.gz 文件。"
 msgid "File size exceeds 10MB limit."
 msgstr "文件大小超过 10MB 限制。"
 
-msgid "Do you want to restore the client to default settings?"
-msgstr "是否要恢复客户端默认配置？"
+msgid "Do you want to restore the %s to default settings?"
+msgstr "是否要恢复%s默认配置？"
 
-msgid "Are you sure you want to restore the client to default settings?"
-msgstr "是否真的要恢复客户端默认配置？"
+msgid "Are you sure you want to restore the %s to default settings?"
+msgstr "是否真的要恢复%s默认配置？"
 
 msgid "_urltest"
 msgstr "URLTest"
@@ -2160,6 +2136,9 @@ msgstr "Gecko 包大小（最小）"
 msgid "Gecko Packet Size (max)"
 msgstr "Gecko 包大小（最大）"
 
+msgid "Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."
+msgstr "在网关上启用 UPnP/NAT-PMP 端口映射以提升打洞成功率。"
+
 msgid "valid time (hh:mm)"
 msgstr "有效时间（hh:mm）"
 
@@ -2171,3 +2150,6 @@ msgstr "密码套件"
 
 msgid "Configures the list of supported cipher suites, separated by :"
 msgstr "配置支持的密码套件列表，以冒号 (:) 分隔。"
+
+msgid "Connection Reuse"
+msgstr "连接复用"

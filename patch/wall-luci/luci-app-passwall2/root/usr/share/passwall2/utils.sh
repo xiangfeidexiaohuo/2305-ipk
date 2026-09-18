@@ -60,15 +60,24 @@ get_cache_var() {
 	}
 }
 
+del_cache_var() {
+	local key="${1}"
+	[ -n "${key}" ] && [ -f "${TMP_PATH}/var" ] && {
+		sed -i "/${key}=/d" $TMP_PATH/var >/dev/null 2>&1
+	}
+}
+
 set_cache_var() {
 	local key="${1}"
 	shift 1
-	local val="$@"
-	[ -n "${key}" ] && [ -n "${val}" ] && {
-		[ ! -d $TMP_PATH ] && mkdir -p $TMP_PATH
-		sed -i "/${key}=/d" $TMP_PATH/var >/dev/null 2>&1
-		echo "${key}=\"${val}\"" >> $TMP_PATH/var
-		eval ${key}=\"${val}\"
+	[ -n "${key}" ] && {
+		del_cache_var ${key}
+		local val="$@"
+		[ -n "${val}" ] && {
+			[ ! -d $TMP_PATH ] && mkdir -p $TMP_PATH
+			echo "${key}=\"${val}\"" >> $TMP_PATH/var
+			eval ${key}=\"${val}\"
+		}
 	}
 }
 
@@ -251,28 +260,6 @@ hosts_foreach() {
 		__ret=$?
 		[ ${__ret} -ge ${ERROR_NO_CATCH:-1} ] && return ${__ret}
 	done
-}
-
-get_first_dns() {
-	local __hosts_val=${1}; shift 1
-	__first() {
-		[ -z "${2}" ] && return 0
-		echo "${2}#${3}"
-		return 1
-	}
-	eval "hosts_foreach \"${__hosts_val}\" __first \"$@\""
-}
-
-get_last_dns() {
-	local __hosts_val=${1}; shift 1
-	local __first __last
-	__every() {
-		[ -z "${2}" ] && return 0
-		__last="${2}#${3}"
-		__first=${__first:-${__last}}
-	}
-	eval "hosts_foreach \"${__hosts_val}\" __every \"$@\""
-	[ "${__first}" ==  "${__last}" ] || echo "${__last}"
 }
 
 check_port_exists() {

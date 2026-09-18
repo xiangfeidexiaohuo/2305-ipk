@@ -74,12 +74,12 @@ function index()
 	entry({"admin", "services", "openclash", "other-rules-edit"},cbi("openclash/other-rules-edit"), nil).leaf = true
 	entry({"admin", "services", "openclash", "custom-dns-edit"},cbi("openclash/custom-dns-edit"), nil).leaf = true
 	entry({"admin", "services", "openclash", "other-file-edit"},cbi("openclash/other-file-edit"), nil).leaf = true
-	entry({"admin", "services", "openclash", "proxy-provider-file-manage"},form("openclash/proxy-provider-file-manage"), nil).leaf = true
+	entry({"admin", "services", "openclash", "proxy-providers-file-manage"},form("openclash/proxy-providers-file-manage"), nil).leaf = true
 	entry({"admin", "services", "openclash", "rule-providers-file-manage"},form("openclash/rule-providers-file-manage"), nil).leaf = true
 	entry({"admin", "services", "openclash", "config-subscribe-edit"},cbi("openclash/config-subscribe-edit"), nil).leaf = true
-	entry({"admin", "services", "openclash", "servers-config"},cbi("openclash/servers-config"), nil).leaf = true
-	entry({"admin", "services", "openclash", "groups-config"},cbi("openclash/groups-config"), nil).leaf = true
-	entry({"admin", "services", "openclash", "proxy-provider-config"},cbi("openclash/proxy-provider-config"), nil).leaf = true
+	entry({"admin", "services", "openclash", "proxies-config"},cbi("openclash/proxies-config"), nil).leaf = true
+	entry({"admin", "services", "openclash", "proxy-groups-config"},cbi("openclash/proxy-groups-config"), nil).leaf = true
+	entry({"admin", "services", "openclash", "proxy-providers-config"},cbi("openclash/proxy-providers-config"), nil).leaf = true
 	entry({"admin", "services", "openclash", "config"},form("openclash/config"),_("Config Manage"), 80).leaf = true
 	entry({"admin", "services", "openclash", "log"},cbi("openclash/log"),_("Server Logs"), 90).leaf = true
 	entry({"admin", "services", "openclash", "myip_check"}, call("action_myip_check"))
@@ -168,16 +168,24 @@ local function dase()
 	return fs.uci_get_config("config", "dashboard_password")
 end
 
-local function db_foward_domain()
+local function dashboard_forward_domain()
 	return fs.uci_get_config("config", "dashboard_forward_domain")
 end
 
-local function db_foward_port()
+local function dashboard_forward_port()
 	return fs.uci_get_config("config", "dashboard_forward_port")
 end
 
-local function db_foward_ssl()
+local function dashboard_forward_ssl()
 	return fs.uci_get_config("config", "dashboard_forward_ssl") or 0
+end
+
+local function dashboard_custom_url()
+	return fs.uci_get_config("config", "dashboard_custom_url")
+end
+
+local function dashboard_custom_clash_compatible()
+	return fs.uci_get_config("config", "dashboard_custom_clash_compatible") or 0
 end
 
 local function coremodel()
@@ -261,16 +269,20 @@ end
 local ov = dofile("/usr/share/openclash/openclash_version.lua")
 
 local function coremetacv()
-	local v = "0"
 	if not fs.access(meta_core_path) then
-		return v
-	else
-		v = SYS.exec(string.format("%s -v 2>/dev/null |awk -F ' ' '{print $3}' |head -1 |tr -d '\n'", meta_core_path))
-		if not v or v == "" then
-			return "0"
-		end
+		return "0"
 	end
-	return v
+
+	local st = nixio.fs.stat(meta_core_path)
+	local key = st and (tostring(st.mtime) .. "-" .. tostring(st.size)) or ""
+
+	local v = fs.cached_value("core_cv_cache", key, function()
+		local out = SYS.exec(string.format("%s -v 2>/dev/null |awk -F ' ' '{print $3}' |head -1 |tr -d '\n'", meta_core_path))
+		if not out or out == "" then return nil end
+		return out
+	end)
+
+	return v or "0"
 end
 
 function release_branch()
@@ -319,10 +331,12 @@ local function opcv()
 	if info and info["luci-app-openclash"] and info["luci-app-openclash"]["Version"] and info["luci-app-openclash"]["Installed-Time"] then
 		v = info["luci-app-openclash"]["Version"]
 	else
-		if fs.pkg_type() == "opkg" then
-			v = fs.read_pkg_field("luci-app-openclash", "Version")
-		else
-			v = fs.read_pkg_field("luci-app-openclash", "V"):match("[%d%.]+") or ""
+		v = fs.oc_version()
+		if v == "0" then
+			return "0"
+		end
+		if fs.pkg_type() ~= "opkg" then
+			v = v:match("[%d%.]+") or ""
 		end
 	end
 	if v and v ~= "" then
@@ -1092,7 +1106,7 @@ function action_switch_run_mode()
 	end
 	uci:commit("openclash")
 	if is_running() then
-		SYS.exec("/etc/init.d/openclash restart >/dev/null 2>&1 &")
+		SYS.exec("/etc/init.d/openclash restart >/dev/null 2>&1")
 	end
 end
 
@@ -1139,30 +1153,159 @@ function action_switch_log()
 	})
 end
 
+local function proc_cpu_count()
+	local content = nixio.fs.readfile("/proc/cpuinfo")
+	if not content then
+		return "1"
+	end
+	local count = 0
+	for line in content:gmatch("[^\n]+") do
+		if line:match("^processor") then
+			count = count + 1
+		end
+	end
+	return count > 0 and tostring(count) or "1"
+end
+
+local function proc_find_core_pid()
+	local iter = nixio.fs.dir("/proc")
+	if not iter then
+		return nil
+	end
+	local pids = {}
+	for entry in iter do
+		if entry:match("^%d+$") then
+			pids[#pids + 1] = tonumber(entry)
+		end
+	end
+	table.sort(pids)
+	for _, pid in ipairs(pids) do
+		local cmdline = nixio.fs.readfile("/proc/" .. pid .. "/cmdline")
+		if cmdline and cmdline:gsub("%z", " "):match("^[^ ]*clash") then
+			return tostring(pid)
+		end
+	end
+	return nil
+end
+
+local function proc_core_cpu_percent(pid)
+	if nixio.fs.access("/sys/fs/cgroup/cpuacct") then
+		local dir = "/sys/fs/cgroup/cpuacct/openclash"
+		if not nixio.fs.access(dir) then
+			SYS.exec("mkdir -p " .. dir .. " 2>/dev/null")
+		end
+		if nixio.fs.access(dir) then
+			local f = io.open(dir .. "/cgroup.procs", "w")
+			if f then
+				f:write(pid, "\n")
+				f:close()
+				local usage_file = dir .. "/cpuacct.usage"
+				local function read_usage()
+					local raw = fs.readfile(usage_file)
+					if not raw then
+						return nil
+					end
+					return tonumber(raw:match("^(%d+)"))
+				end
+				local u1 = read_usage()
+				if u1 then
+					local up1 = tonumber((fs.readfile("/proc/uptime") or ""):match("^(%S+)"))
+					nixio.nanosleep(0, 200000000)
+					local u2 = read_usage()
+					local up2 = tonumber((fs.readfile("/proc/uptime") or ""):match("^(%S+)"))
+					if u2 and up1 and up2 and up2 > up1 then
+						return (u2 - u1) / ((up2 - up1) * 1e9)
+					end
+				end
+			end
+		end
+	end
+
+	if nixio.fs.access("/sys/fs/cgroup/cgroup.controllers") then
+		local cg = fs.readfile("/proc/" .. pid .. "/cgroup")
+		if cg then
+			local path = cg:match("0::([^\n]+)")
+			if path and path ~= "/" and path ~= "" then
+				local usage_file = "/sys/fs/cgroup" .. path .. "/cpu.stat"
+				local function read_usage()
+					local raw = fs.readfile(usage_file)
+					if not raw then
+						return nil
+					end
+					return tonumber(raw:match("usage_usec%s+(%d+)"))
+				end
+				local u1 = read_usage()
+				if u1 then
+					local up1 = tonumber((fs.readfile("/proc/uptime") or ""):match("^(%S+)"))
+					nixio.nanosleep(0, 200000000)
+					local u2 = read_usage()
+					local up2 = tonumber((fs.readfile("/proc/uptime") or ""):match("^(%S+)"))
+					if u2 and up1 and up2 and up2 > up1 then
+						return (u2 - u1) / ((up2 - up1) * 1e6)
+					end
+				end
+			end
+		end
+	end
+
+	local function read_sample()
+		local uptime = fs.readfile("/proc/uptime")
+		local stat = fs.readfile("/proc/" .. pid .. "/stat")
+		if not uptime or not stat then
+			return nil
+		end
+		local up = tonumber(uptime:match("^(%S+)"))
+		local last_bracket = 0
+		for pos in stat:gmatch("()%)") do
+			last_bracket = pos
+		end
+		if not up or up <= 0 or last_bracket == 0 then
+			return nil
+		end
+		local fields = {}
+		for field in stat:sub(last_bracket + 1):gmatch("%S+") do
+			fields[#fields + 1] = field
+		end
+		local utime = tonumber(fields[12])
+		local stime = tonumber(fields[13])
+		if not utime or not stime then
+			return nil
+		end
+		return up, utime + stime
+	end
+
+	local up1, total1 = read_sample()
+	if not up1 then
+		return nil
+	end
+	nixio.nanosleep(0, 200000000)
+	local up2, total2 = read_sample()
+	if not up2 then
+		return nil
+	end
+	local elapsed = up2 - up1
+	if elapsed <= 0 then
+		return nil
+	end
+	return (total2 - total1) / elapsed
+end
+
 function action_toolbar_show_sys()
 	local cpu = "0"
 	local load_avg = "0"
-	local cpu_count = SYS.exec("grep -c ^processor /proc/cpuinfo 2>/dev/null"):gsub("\n", "") or 1
-	local pid = SYS.exec("pgrep -f '^[^ ]*clash' | head -1 | tr -d '\n' 2>/dev/null")
+	local cpu_count = proc_cpu_count()
+	local pid = proc_find_core_pid()
 
 	if pid and pid ~= "" then
-		cpu = SYS.exec(string.format([[
-		top -b -n1 | awk -v pid="%s" '
-			BEGIN { cpu_col=0; }
-			$0 ~ /%%CPU/ { 
-				for(i=1;i<=NF;i++) if($i=="%%CPU") cpu_col=i;
-				next
-			}
-			cpu_col>0 && $1==pid { print $cpu_col }
-		'
-		]], pid))
-		if cpu and cpu ~= "" then
-			cpu = string.match(cpu, "%d+%.?%d*") or "0"
-		else
-			cpu = "0"
+		local usage = proc_core_cpu_percent(pid)
+		if usage then
+			cpu = usage
 		end
 
-		load_avg = SYS.exec("awk '{print $2; exit}' /proc/loadavg 2>/dev/null"):gsub("\n", "") or "0"
+		local loadavg = nixio.fs.readfile("/proc/loadavg")
+		if loadavg then
+			load_avg = loadavg:match("^%S+%s+(%S+)") or "0"
+		end
 
 		if not string.match(load_avg, "^[0-9]*%.?[0-9]*$") then
 			load_avg = "0"
@@ -1171,14 +1314,23 @@ function action_toolbar_show_sys()
 
 	HTTP.prepare_content("application/json")
 	HTTP.write_json({
-		cpu = cpu,
-		load_avg = tostring(math.floor(tonumber(load_avg) / tonumber(cpu_count) * 100));
+		cpu = tostring(cpu),
+		load_avg = tostring(tonumber(load_avg) / tonumber(cpu_count) * 100);
 	})
 end
 
 function action_toolbar_show()
-	local pid = SYS.exec("pgrep -f '^[^ ]*clash' | head -1 | tr -d '\n' 2>/dev/null")
+	local pid = proc_find_core_pid()
 	local traffic, connections, connection, up, down, up_total, down_total, mem, cpu, load_avg, cpu_count
+	connection = "0"
+	up = "0"
+	down = "0"
+	up_total = "0"
+	down_total = "0"
+	mem = 0
+	cpu = 0
+	load_avg = "0"
+	cpu_count = proc_cpu_count()
 	if pid and pid ~= "" then
 		local daip = daip()
 		local dase = dase() or ""
@@ -1279,24 +1431,14 @@ function action_toolbar_show()
 		end
 
 		mem = tonumber(SYS.exec(string.format("cat /proc/%s/status 2>/dev/null |grep -w VmRSS |awk '{print $2}'", pid)))
-		cpu = SYS.exec(string.format([[
-		top -b -n1 | awk -v pid="%s" '
-			BEGIN { cpu_col=0; }
-			$0 ~ /%%CPU/ { 
-				for(i=1;i<=NF;i++) if($i=="%%CPU") cpu_col=i;
-				next
-			}
-			cpu_col>0 && $1==pid { print $cpu_col }
-		'
-		]], pid))
+		cpu = proc_core_cpu_percent(pid)
 
-		if mem and cpu then
+		if mem then
 			mem = mem * 1024
-			cpu = string.match(cpu, "%d+%.?%d*") or "0"
 		else
 			mem = 0
-			cpu = "0"
 		end
+		cpu = cpu or 0
 
 		load_avg = SYS.exec("awk '{print $2; exit}' /proc/loadavg 2>/dev/null"):gsub("\n", "") or "0"
 		cpu_count = SYS.exec("grep -c ^processor /proc/cpuinfo 2>/dev/null"):gsub("\n", "") or 1
@@ -1304,8 +1446,6 @@ function action_toolbar_show()
 		if not string.match(load_avg, "^[0-9]*%.?[0-9]*$") then
 			load_avg = "0"
 		end
-	else
-		return
 	end
 
 	HTTP.prepare_content("application/json")
@@ -1316,8 +1456,8 @@ function action_toolbar_show()
 		up_total = up_total,
 		down_total = down_total,
 		mem = mem,
-		cpu = cpu,
-		load_avg = tostring(math.floor(tonumber(load_avg) / tonumber(cpu_count) * 100));
+		cpu = tostring(cpu),
+		load_avg = tostring(tonumber(load_avg) / tonumber(cpu_count) * 100);
 	})
 end
 
@@ -1481,8 +1621,10 @@ function action_conn_status(internal)
 		clash = uci:get("openclash", "config", "enable") == "1",
 		daip = daip(),
 		dase = dase(),
-		db_foward_port = db_foward_port(),
-		db_foward_domain = db_foward_domain(),
+		-- Keep the misspelled JSON keys for compatibility with existing views.
+		db_foward_port = dashboard_forward_port(),
+		db_foward_domain = dashboard_forward_domain(),
+		db_forward_ssl = dashboard_forward_ssl(),
 		cn_port = cn_port()
 	}
 	if internal then return data end
@@ -1503,7 +1645,9 @@ function action_status()
 		dase = status_data.dase,
 		db_foward_port = status_data.db_foward_port,
 		db_foward_domain = status_data.db_foward_domain,
-		db_forward_ssl = db_foward_ssl(),
+		db_forward_ssl = status_data.db_forward_ssl,
+		dashboard_custom_url = dashboard_custom_url(),
+		dashboard_custom_clash_compatible = dashboard_custom_clash_compatible(),
 		cn_port = status_data.cn_port,
 		yacd = fs.isdirectory("/usr/share/openclash/ui/yacd"),
 		dashboard = fs.isdirectory("/usr/share/openclash/ui/dashboard"),
@@ -1530,37 +1674,11 @@ function action_status()
 end
 
 -- Streaming write.
--- New LuCI: luci.http.write = L.print() (http.lua) is C-stdio buffered
--- (musl 4096B / glibc 8192B), io.flush() can't reach it -> use L.http:write.
--- Old LuCI (18.06): no L global; HTTP.write = coroutine.yield, immediate.
--- CRITICAL: on old LuCI HTTP.write = coroutine.yield, and Lua 5.1 cannot
--- yield across a C function boundary. Wrapping write_padded() in pcall()
--- throws "attempt to yield across C-call boundary" -> pcall swallows the
--- error and the chunk is silently lost while the rest of the script keeps
--- running (backend logs look fine but the frontend receives nothing).
--- Callers MUST call write_padded() directly, never through pcall.
--- 8192-space first line only helps the old buffered path.
--- Ref: openwrt/luci master: libs/luci-lib-base/luasrc/http.lua
---      modules/luci-base/ucode/http.uc, htdocs/cgi-bin/luci
---      immortalwrt/luci 18.06-k5.4: modules/luci-base/luasrc/http.lua
---      jow-/ucode: vm.c (uc_vm_insn_print), lib/fs.c, main.c
---
--- Nginx mode (ImmortalWrt luci-nginx / luci-ssl-nginx): LuCI is not run by
--- uhttpd directly; nginx forwards /cgi-bin/luci over the uwsgi protocol to
--- the uwsgi-cgi plugin (luci-webui vassal), which forks the CGI and pipes its
--- stdout back through nginx. The CGI-side flush (io.flush / L.http:write)
--- only gets data into the pipe; nginx still buffers the whole response body
--- by default (uwsgi_buffering on, ~8KB) and only pushes it once the buffer
--- fills or the response ends, so the 8192-space first line alone cannot keep
--- the stream alive. To make nginx forward every chunk in real time, the CGI
--- response must carry the "X-Accel-Buffering: no" header (honored by nginx
--- proxy/fastcgi/uwsgi modules). It is emitted unconditionally on the very
--- first write, before any body, so it lands in the response header block.
--- Backend detection via SERVER_SOFTWARE was deliberately dropped: the value
--- is not reliable (custom uwsgi_params may pre-set it to "nginx", defeating
--- the check). The header is only meaningful to nginx and is stripped by it
--- before reaching the client; under uhttpd it is simply passed through and
--- ignored, so sending it always is harmless.
+-- New LuCI buffers luci.http.write in C stdio and io.flush cannot reach it, so L.http:write
+-- is used there; old LuCI has no L global and writes immediately.
+-- pcall must never wrap write_padded: on old LuCI HTTP.write yields and Lua 5.1 cannot
+-- yield across a C call. The first line fills the old path's buffer, the X-Accel-Buffering
+-- header makes nginx forward every chunk, uhttpd passes it through.
 local write_padded_first = true
 
 local function write_padded(data)
@@ -3853,7 +3971,7 @@ function action_switch_oc_setting()
 			end
 			uci:set("openclash", "@overwrite[0]", "china_ip_route", value)
 			uci:commit("openclash")
-			SYS.exec("/etc/init.d/openclash restart >/dev/null 2>&1 &")
+			SYS.exec("/etc/init.d/openclash restart >/dev/null 2>&1")
 		end
 	elseif setting == "stream_unlock" then
 		uci:set("openclash", "config", "stream_auto_select", value)
@@ -4790,6 +4908,7 @@ function action_add_subscription()
 	local node_type = HTTP.formvalue("node_type") or "false"
 	local rule_provider = HTTP.formvalue("rule_provider") or "false"
 	local custom_params = HTTP.formvalue("custom_params") or ""
+	local keyword_option = HTTP.formvalue("keyword_option") or "0"
 	local keyword = HTTP.formvalue("keyword") or ""
 	local ex_keyword = HTTP.formvalue("ex_keyword") or ""
 	local de_ex_keyword = HTTP.formvalue("de_ex_keyword") or ""
@@ -4959,6 +5078,8 @@ function action_add_subscription()
 				uci:set_list("openclash", section_id, "custom_params", params)
 			end
 		end
+
+		uci:set("openclash", section_id, "keyword_option", keyword_option)
 
 		uci:delete("openclash", section_id, "keyword")
 		if keyword and keyword ~= "" then
@@ -5576,7 +5697,7 @@ function action_add_age_config()
 	local age_secret = HTTP.formvalue("age_secret") or ""
 	local age_public = HTTP.formvalue("age_public") or ""
 	local age_algo = HTTP.formvalue("age_algo") or ""
-	local age_section_id, age_section_hidden
+	local age_section_id, age_section_hidden, age_section_secret
 
 	HTTP.prepare_content("application/json")
 
@@ -5589,6 +5710,7 @@ function action_add_age_config()
 		if s.name == name then
 			age_section_id = s['.name']
 			age_section_hidden = s.hidden and s.hidden == "true"
+			age_section_secret = s.secret
 			return false
 		end
 	end)
@@ -5598,7 +5720,7 @@ function action_add_age_config()
 		return
 	end
 
-	if not age_section_id and (age_secret ~= "" or age_public ~= "" or age_algo ~= "") then
+	if not age_section_id and age_secret ~= "" then
 		age_section_id = uci:add("openclash", "config_age_secret")
 		if age_section_id then
 			uci:set("openclash", age_section_id, "name", name)
@@ -5606,7 +5728,37 @@ function action_add_age_config()
 	end
 
 	if age_section_id then
-		if (age_secret == "" and age_public == "") then
+		if (age_secret == "") then
+			-- Before removing the age keys, decrypt the config file if it is
+			-- age-encrypted so it stays readable after the keys are gone.
+			if age_section_secret and age_section_secret ~= "" then
+				local config_paths = {
+					"/etc/openclash/config/" .. name .. ".yaml",
+					"/etc/openclash/" .. name .. ".yaml",
+				}
+				for _, config_path in ipairs(config_paths) do
+					if fs.access(config_path) then
+						local fp = io.open(config_path, "rb")
+						if fp then
+							local content = fp:read("*a")
+							fp:close()
+							if content and content:find("BEGIN AGE ENCRYPTED FILE", 1, true) then
+								local plain = fs.age_decrypt(age_section_secret, content)
+								if plain and plain ~= "" then
+									local fo = io.open(config_path, "wb")
+									if fo then
+										fo:write(plain)
+										fo:close()
+									end
+								else
+									HTTP.write_json({status = "error", message = "Failed to decrypt config file, age config cannot be removed"})
+									return
+								end
+							end
+						end
+					end
+				end
+			end
 			uci:delete("openclash", age_section_id)
 		else
 			if age_secret and age_secret ~= "" then
@@ -5732,6 +5884,8 @@ local function fetch_oix_sub(token)
 	local sub_info = SYS.exec(get_sub)
 	if sub_info then sub_info = json.parse(sub_info) end
 	if sub_info and sub_info.ret == 200 then
+		uci:set("openclash", "config", "oix_token", token)
+		uci:commit("openclash")
 		local sub_key = {"openclash"}
 		for _,v in ipairs(sub_key) do
 			while true do
@@ -5784,8 +5938,6 @@ function oix_login()
 		write_padded('{"stage":"saving_token","text":"' .. luci.i18n.translate("Saving token...") .. '"}')
 		token = input_token
 		if fetch_oix_sub(token) then
-			uci:set("openclash", "config", "oix_token", input_token)
-			uci:commit("openclash")
 			write_padded('{"stage":"done","result":200}')
 		else
 			write_padded('{"stage":"error","result":' .. json.stringify(luci.i18n.translate("invalid token")) .. '}')
@@ -5804,11 +5956,16 @@ function oix_login()
 					oix_logout(token)
 				end
 				token = info.data.token
-				uci:set("openclash", "config", "oix_token", token)
-				uci:commit("openclash")
-				result = info.ret
-				fetch_oix_sub(token)
-				write_padded('{"stage":"done","result":200}')
+				if fetch_oix_sub(token) then
+					write_padded('{"stage":"done","result":200}')
+				else
+					uci:delete("openclash", "config", "oix_token")
+					uci:commit("openclash")
+					fs.unlink("/tmp/oix_checkin")
+					fs.unlink("/tmp/oix_info")
+					result = luci.i18n.translate("login failed")
+					write_padded('{"stage":"error","result":' .. json.stringify(result) .. '}')
+				end
 			else
 				uci:delete("openclash", "config", "oix_token")
 				uci:commit("openclash")

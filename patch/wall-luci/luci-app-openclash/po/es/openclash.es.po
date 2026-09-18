@@ -191,6 +191,18 @@ msgstr "Experimental: omitir IP de regiones específicas"
 msgid "China IPv6 Route"
 msgstr "Experimental: omitir IPv6 de regiones específicas"
 
+msgid "China IP Route Domain Source"
+msgstr "Fuente de dominios para la ruta IP de China"
+
+msgid "Select The China Domain Data Source Used by China IP Route in Fake-IP Mode. MetaCubeX Uses cn.mrs from MetaCubeX/meta-rules-dat; GeoSite Uses The cn Category in The Current GeoSite Database"
+msgstr "Selecciona la fuente de dominios de China que usa la ruta IP de China en modo Fake-IP. MetaCubeX usa cn.mrs de MetaCubeX/meta-rules-dat; GeoSite usa la categoría cn de la base de datos GeoSite actual."
+
+msgid "MetaCubeX Rules cn.mrs (Default)"
+msgstr "Reglas de MetaCubeX cn.mrs (predeterminado)"
+
+msgid "GeoSite Rules geosite:cn"
+msgstr "Reglas de GeoSite geosite:cn"
+
 msgid "Bypass Mainland China"
 msgstr "Omitir China continental"
 
@@ -501,17 +513,44 @@ msgstr "Dirección pública del panel"
 msgid "Domain Name For Dashboard Login From Public Network"
 msgstr "Dominio para iniciar sesión en el panel desde Internet"
 
+msgid "Domain Name or IP For Dashboard Login From Public Network (without http:// or https://)"
+msgstr "Dominio o IP para iniciar sesión en el panel desde Internet (sin http:// ni https://)"
+
+msgid "Enter a valid hostname or IP address without a path or user information"
+msgstr "Introduzca un nombre de host o dirección IP válidos sin ruta ni información de usuario"
+
 msgid "Public Dashboard Port"
 msgstr "Puerto público del panel"
 
 msgid "Port For Dashboard Login From Public Network"
 msgstr "Puerto usado para iniciar sesión en el panel desde Internet"
 
+msgid "Optional Port For Dashboard Login From Public Network (defaults to 443 with SSL or 80 without SSL)"
+msgstr "Puerto opcional para iniciar sesión en el panel desde Internet (predeterminado: 443 con SSL o 80 sin SSL)"
+
 msgid "Public Dashboard SSL enabled"
 msgstr "Habilitar SSL para acceso público"
 
 msgid "Is SSL enabled For Dashboard Login From Public Network"
 msgstr "Indica si el acceso al panel desde Internet utiliza SSL"
+
+msgid "Custom Dashboard URL"
+msgstr "URL personalizada del panel"
+
+msgid "Optional complete HTTP(S) URL for an externally hosted Dashboard. OpenClash appends hostname, port and secret parameters without adding a local UI path. Include a hash route such as #/setup in the URL when required by the panel."
+msgstr "URL HTTP(S) completa opcional de un panel alojado externamente. OpenClash añade los parámetros hostname, port y secret sin añadir una ruta de interfaz local. Incluya una ruta hash como #/setup en la URL cuando el panel lo requiera."
+
+msgid "External Dashboard"
+msgstr "Panel externo"
+
+msgid "Clash Dashboard Compatibility Mode"
+msgstr "Modo de compatibilidad de Clash Dashboard"
+
+msgid "Use Clash Dashboard-compatible #/?host=... login parameters for the custom Dashboard URL instead of the standard hostname parameters."
+msgstr "Use parámetros de inicio de sesión compatibles con Clash Dashboard #/?host=... para la URL del panel personalizado en lugar de los parámetros hostname estándar."
+
+msgid "Enter a valid complete HTTP or HTTPS URL without user information"
+msgstr "Introduzca una URL HTTP o HTTPS completa válida sin información de usuario"
 
 msgid "GEO Update"
 msgstr "Actualización de bases GEO"
@@ -1164,6 +1203,15 @@ msgstr "Mejorado"
 msgid "Compat"
 msgstr "Compatible"
 
+msgid "Fake-IP"
+msgstr "Fake-IP"
+
+msgid "Redir-Host"
+msgstr "Redir-Host"
+
+msgid "Switch mode failed!"
+msgstr "¡Falló el cambio de modo!"
+
 msgid "Mix"
 msgstr "Mixto"
 
@@ -1620,6 +1668,21 @@ msgstr "Error al mover el núcleo:"
 msgid "Core Verification Failed:"
 msgstr "Error al verificar el núcleo:"
 
+msgid "Checksum Verification Failed"
+msgstr "Fallo de la verificación de Checksum"
+
+msgid "Checksum Verification Successful for"
+msgstr "Verificación de Checksum correcta para"
+
+msgid "Checksum file unavailable or entry not found, skip verification for"
+msgstr "Archivo de verificación de Checksum no disponible o entrada no encontrada, se omite la verificación"
+
+msgid "Checksum mismatch for"
+msgstr "La verificación de Checksum no coincide"
+
+msgid "Unable to compute checksum, skip verification for"
+msgstr "No se puede calcular el Checksum, se omite la verificación"
+
 msgid "No Compiled Version Selected, Please Select In Update Page And Try Again!"
 msgstr "No se ha seleccionado ninguna versión compilada; selecciónala en la página de actualización."
 
@@ -2034,6 +2097,9 @@ msgstr "Fallo al modificar Fake-IP-Filter,"
 msgid "Set Nameserver-Policy Failed,"
 msgstr "Fallo al modificar Nameserver-Policy,"
 
+msgid "Set Proxy-Server-Nameserver-Policy Failed,"
+msgstr "Fallo al modificar Proxy-Server-Nameserver-Policy,"
+
 msgid "Set Custom Rules Failed,"
 msgstr "Fallo al aplicar reglas personalizadas,"
 
@@ -2103,8 +2169,11 @@ msgstr "Carga"
 msgid "Statistics"
 msgstr "Datos en ejecución"
 
-msgid "Toggle Chart"
-msgstr "Alternar tarjetas/gráfico"
+msgid "Cards"
+msgstr "Tarjetas"
+
+msgid "Chart"
+msgstr "Gráfico"
 
 msgid "Bad address specified!"
 msgstr "Dirección no válida."
@@ -3669,6 +3738,12 @@ msgstr "URL no válida. Cuando la conversión está deshabilitada solo se admite
 msgid "Advanced Options"
 msgstr "Opciones avanzadas"
 
+msgid "Node Filtering"
+msgstr "Filtrado de nodos"
+
+msgid "Show node filter options"
+msgstr "Mostrar opciones de filtrado de nodos"
+
 msgid "Show more subscription options"
 msgstr "Mostrar más opciones de suscripción"
 
@@ -4361,3 +4436,33 @@ msgstr "la versión"
 
 msgid "to update individually"
 msgstr "para actualizar individualmente"
+
+msgid "A custom planet file. An orbit (a world and its seed) belongs to Other Parameters"
+msgstr "Archivo planet personalizado. Un orbit (un world y su seed) va en Otros parámetros"
+
+msgid "auto: relay only when the direct path fails, force: always relay, disable: off"
+msgstr "auto: retransmite solo si falla la ruta directa, force: siempre, disable: desactivado"
+
+msgid "only for http-mask-mode stream, poll or auto"
+msgstr "solo con http-mask-mode stream, poll o auto"
+
+msgid "Write Uci Config Failed,"
+msgstr "Fallo al escribir la configuración de UCI,"
+
+msgid "Resolve Group Failed,"
+msgstr "Fallo al analizar grupo,"
+
+msgid "Merge Failed,"
+msgstr "Fallo al combinar la configuración,"
+
+msgid "Update Config File Failed,"
+msgstr "Fallo al actualizar el archivo de configuración,"
+
+msgid "Rule-Provider"
+msgstr "Proveedor de reglas"
+
+msgid "Is Not Registered, Deleted The Fake-IP-Filter Rule"
+msgstr "no está registrado, se eliminó la regla Fake-IP-Filter"
+
+msgid "to Avoid Core Start Failed..."
+msgstr "para evitar que el núcleo falle al iniciar..."
