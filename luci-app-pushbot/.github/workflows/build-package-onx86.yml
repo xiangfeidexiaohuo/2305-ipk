@@ -83,7 +83,6 @@ jobs:
       - name: Restore OpenWrt cache
         id: cache
         uses: actions/cache/restore@v4
-        if: inputs.use_cache == true
         with:
           path: openwrt
           key: pushbot-${{ matrix.op_branch }}-${{ runner.os }}
@@ -120,6 +119,11 @@ jobs:
           limit-access-to-actor: true
           wait-timeout-minutes: 5
 
+      - name: Set npm cache to temp
+        run: |
+          mkdir -p /tmp/npm-cache
+          echo "npm_config_cache=/tmp/npm-cache" >> $GITHUB_ENV
+
       - name: Download and Compile
         run: |
           cd openwrt
@@ -132,7 +136,7 @@ jobs:
 
       - name: Save OpenWrt cache
         uses: actions/cache/save@v4
-        if: inputs.use_cache == true && success() && steps.cache.outputs.cache-hit != 'true'
+        if: success() && steps.cache.outputs.cache-hit != 'true'
         with:
           path: openwrt
           key: pushbot-${{ matrix.op_branch }}-${{ runner.os }}
