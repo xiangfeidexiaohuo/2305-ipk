@@ -1,0 +1,59 @@
+name: Update
+
+on: 
+  repository_dispatch:
+  workflow_dispatch:
+
+# 定时触发编译
+  schedule:
+    - cron: 0 */1 * * *
+
+# 点赞☆Star触发编译
+#  watch:
+#    types: [started]
+
+jobs:
+  Update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone Repository
+      uses: actions/checkout@main
+
+    - name: Set git
+      run : |
+        git config --global user.email "jsjson@163.com"
+        git config --global user.name "xiangfeidexiaohuo"
+        sudo timedatectl set-timezone "Asia/Shanghai"
+
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@main
+      continue-on-error: true
+      with:
+        retain_days: 1
+        keep_minimum_runs: 0  
+        
+    - name: Update
+      run: |
+
+        rm -rf ./luci-app-dockerman
+        rm -rf ./part
+        mkdir -p ./part
+
+        git clone --depth=1 https://github.com/jjm2473/luci.git -b istoreos-25.12
+        mv ./luci/applications/luci-app-dockerman ./
+        rm -rf ./luci
+
+        git clone --depth=1 https://github.com/jjm2473/packages.git -b istoreos-25.12
+        mv ./packages/utils/{dockerd,docker,docker-compose,containerd,tini,runc} ./part/
+        rm -rf ./packages
+
+        grep -rl 'include ../../lang/golang/golang-package.mk' part | xargs -r sed -i 's|include ../../lang/golang/golang-package.mk|include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk|'
+        grep -rl 'include ../../luci.mk' luci-app-dockerman | xargs -r sed -i 's|include ../../luci.mk|include $(TOPDIR)/feeds/luci/luci.mk|'
+
+        
+    - name: Apply
+      run: |
+        git add .
+        git commit -m "Auto Sync: $(date +%Y-%m-%d" "%H:%M)"
+        git push -f 
+              
