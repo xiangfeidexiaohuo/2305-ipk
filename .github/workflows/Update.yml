@@ -51,6 +51,9 @@ jobs:
         rm -rf ./patch/wall-luci/momo
         rm -rf ./patch/wall-luci/luci-app-homeproxy
         rm -rf ./theme/luci-theme-argon
+        rm -rf ./theme/luci-app-vantage
+        rm -rf ./theme/luci-theme-vantage
+        rm -rf ./theme/luci-theme-7dollar
         # rm -rf ./luci-app-oled
         rm -rf ./op-lucky/*
         rm -rf ./op-daed/*
@@ -207,7 +210,16 @@ jobs:
         rm -rf ./theme/luci-theme-argon/.gitignore     
         rm -rf ./theme/luci-theme-argon/README*
         rm -rf ./theme/luci-theme-argon/RELEASE*
-      
+
+        git clone https://github.com/anothaDev/luci-theme-vantage ./theme/temp1
+        mv ./theme/temp1/luci-app-vantage ./theme/luci-app-vantage
+        mv ./theme/temp1/luci-theme-vantage ./theme/luci-theme-vantage
+        rm -rf ./theme/temp1
+
+        git clone https://github.com/itsmaiGe/luci-theme-7dollar ./theme/luci-theme-7dollar
+        rm -rf ./theme/luci-theme-7dollar/.github
+        rm -rf ./theme/luci-theme-7dollar/.git
+
         # git clone https://github.com/unifreq/luci-app-oled ./oled
         # mv ./oled/luci-app-oled ./
         # rm -rf ./oled
